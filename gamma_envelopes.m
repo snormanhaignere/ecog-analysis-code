@@ -39,11 +39,11 @@ fprintf('Buttworth filtering...\n'); drawnow;
 [B,A] = butter(filt_order, gamma_frequency_range/(input_sr/2));
 gamma_filt = filtfilt(B ,A, input_signal);
 
-% plot the spectrum before and after filtering using fftplot2
-addpath('/Users/svnh2/Dropbox (MIT)/mcdexp-svnh/general-audio-code')
-figure;
-subplot(1,2,1); fftplot2(double(input_signal(:,1)), input_sr); xlim([20 input_sr/2]);
-subplot(1,2,2); fftplot2(double(gamma_filt(:,1)), input_sr); xlim([20 input_sr/2]);
+% % plot the spectrum before and after filtering using fftplot2
+% addpath('/Users/svnh2/Dropbox (MIT)/mcdexp-svnh/general-audio-code')
+% figure;
+% subplot(1,2,1); fftplot2(double(input_signal(:,1)), input_sr); xlim([20 input_sr/2]);
+% subplot(1,2,2); fftplot2(double(gamma_filt(:,1)), input_sr); xlim([20 input_sr/2]);
 
 % envelope extraction
 fprintf('Measuring envelopes...\n'); drawnow;

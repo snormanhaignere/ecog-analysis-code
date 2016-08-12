@@ -1,4 +1,6 @@
-function [gamma_stimulus_response, gamma_stimulus_response_t, stim_names, gamma_env, gamma_env_t] = gamma_stimulus_responses_from_bci(bci_run_file, response_window)
+function [gamma_stimulus_response, gamma_stimulus_response_t, ...
+    stim_names, gamma_env, gamma_env_t] = gamma_stimulus_responses_from_bci(...
+    bci_run_file, response_window)
 
 % function [gamma_stimulus_response, gamma_stimulus_response_t, stim_names, gamma_env, gamma_env_t] = gamma_stimulus_responses_from_bci(bci_run_file)
 % 
@@ -22,7 +24,7 @@ function [gamma_stimulus_response, gamma_stimulus_response_t, stim_names, gamma_
 % 
 % gamma_env_t: corresponding timestamps for the envelope vector above
 % 
-% 2016-1-26: Created by Sam NH
+% 2017-1-26: Created by Sam NH
 
 % load the raw data
 [bci.raw_ecog_signal, bci.states, bci.parameters, ~] = load_bcidat(bci_run_file);
@@ -30,20 +32,20 @@ raw_ecog_sr = bci.parameters.SamplingRate.NumericValue;
 
 %%
 
-xi = 1:500e3;
-stim_time = double(bci.states.StimulusTime(xi));
-stim_code = double(bci.states.StimulusCode(xi));
-source_time = double(bci.states.SourceTime(xi));
+% xi = 1:500e3;
+% stim_time = double(bci.states.StimulusTime(xi));
+% stim_code = double(bci.states.StimulusCode(xi));
+% source_time = double(bci.states.SourceTime(xi));
 
-subplot(2,1,1);
-plot([stim_time-source_time]);
+% subplot(2,1,1);
+% plot([stim_time-source_time]);
 
-stim_time = (stim_time - mean(stim_time))/std(stim_time);
-stim_code = (stim_code - mean(stim_code))/std(stim_code);
-source_time = (source_time - mean(source_time))/std(source_time);
+% stim_time = (stim_time - mean(stim_time))/std(stim_time);
+% stim_code = (stim_code - mean(stim_code))/std(stim_code);
+% source_time = (source_time - mean(source_time))/std(source_time);
 
-subplot(2,1,2);
-plot([stim_time, stim_code, source_time])
+% subplot(2,1,2);
+% plot([stim_time, stim_code, source_time])
 
 
 
