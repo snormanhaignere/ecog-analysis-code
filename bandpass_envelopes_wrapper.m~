@@ -33,24 +33,19 @@ P = preprocessing_parameters;
 %% loop through runs
 
 % number of filters
-n_bands = size(P.bandpass_cutoffs_in_Hz,2);
+n_bands = size(P.bandpass_cutoffs_in_Hz);
 signal_matrix_loaded = false;
 MAT_file_with_envelopes = cell(1, n_bands);
 for i = 1:n_bands
     
-    % create a hash string specific to the inputs and parameters to this function
-    hash_string = DataHash({exp, subjid, r, signal_MAT_file, P.bandpass_env_sr, ...
-        P.bandpass_cutoffs_in_Hz(:,i),P.bandpass_filter_orders(i)});
-    
     % MAT file to save results to
     bp_freq_range_string = ...
-        [num2str(P.bandpass_cutoffs_in_Hz(1,i)) ...
-        '-' num2str(P.bandpass_cutoffs_in_Hz(2,i)) 'Hz'];
+        [num2str(band_in_Hz(1,i)) '-' num2str(band_in_Hz(2,i)) 'Hz'];
     MAT_file_with_envelopes{i} = [analysis_directory ...
-        '/r' num2str(r) '_envelopes_' bp_freq_range_string '_' hash_string '.mat'];
+        '/r' num2str(r) '_bpfilt_' bp_freq_range_string '.mat'];
     
     % check if mat file already exists
-    if exist(MAT_file_with_envelopes{i}, 'file') && ~optInputs(varargin, 'overwrite')
+    if exist(MAT_file_with_envelopes, 'file') && ~optInputs(varargin, 'overwrite')
         continue;
     end
     
@@ -60,16 +55,17 @@ for i = 1:n_bands
     end
     
     % measure envelopes
-    fprintf('Extracting envelopes for band %s...\n', bp_freq_range_string);
+    fprintf('Extracting envelopes for band %s...\n', bp); drawnow;
     envelopes = bandpass_envelopes(signal, sr, P.bandpass_env_sr, ...
         P.bandpass_cutoffs_in_Hz(:,i), P.bandpass_filter_orders(i),...
         figure_directory, ['r' num2str(r) '_bpfilt_' bp_freq_range_string], ...
         good_channels, varargin); %#ok<*NASGU>
     
-    % save to file
-    env_sr = P.bandpass_env_sr;
-    band_in_Hz = P.bandpass_cutoffs_in_Hz(:,i);
-    save(MAT_file_with_envelopes{i}, 'envelopes', 'env_sr', 'band_in_Hz', ...
-        'good_channels', 'P', 'r');
-    
 end
+
+
+% save to file
+env_sr = P.bandpass_env_sr;
+bands_in_Hz = P.bandpass_cutoffs_in_Hz;
+save(MAT_file_with_envelopes, 'envelopes', 'env_sr', 'bands_in_Hz', ...
+    'good_channels', 'P', 'r');

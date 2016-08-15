@@ -18,4 +18,4 @@ P.notch_bw = 1; % 3 dB down/up in Hz
 % parameter of bandpass filters
 P.bandpass_env_sr = 100; 
 P.bandpass_cutoffs_in_Hz = [5 10; 25 50; 70 140]'; % cutoffs
-P.bandpass_filter_orders = 6; % order of butterworth filters
+P.bandpass_filter_orders = 6 * ones(1,3); % order of filters, one per bandwidth
