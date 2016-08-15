@@ -30,13 +30,6 @@ end
 % parameters of the filters
 P = preprocessing_parameters;
 
-% create a hash string specific to the inputs and parameters to this function
-all_args = [exp, subjid, r, signal_MAT_file, varargin];
-assert(length(all_args) == nargin);
-relevant_parameters = {P.bandpass_env_sr, P.bandpass_cutoffs_in_Hz, ...
-    P.bandpass_filter_orders};
-hash_string = DataHash([all_args, relevant_parameters]);
-
 %% loop through runs
 
 % number of filters
@@ -45,12 +38,16 @@ signal_matrix_loaded = false;
 MAT_file_with_envelopes = cell(1, n_bands);
 for i = 1:n_bands
     
+    % create a hash string specific to the inputs and parameters to this function
+    hash_string = DataHash({exp, subjid, r, signal_MAT_file, P.bandpass_env_sr, ...
+        P.bandpass_cutoffs_in_Hz(:,i),P.bandpass_filter_orders(i)});
+    
     % MAT file to save results to
     bp_freq_range_string = ...
         [num2str(P.bandpass_cutoffs_in_Hz(1,i)) ...
         '-' num2str(P.bandpass_cutoffs_in_Hz(2,i)) 'Hz'];
     MAT_file_with_envelopes{i} = [analysis_directory ...
-        '/r' num2str(r) '_bpfilt_' bp_freq_range_string '_' hash_string '.mat'];
+        '/r' num2str(r) '_envelopes_' bp_freq_range_string '_' hash_string '.mat'];
     
     % check if mat file already exists
     if exist(MAT_file_with_envelopes{i}, 'file') && ~optInputs(varargin, 'overwrite')

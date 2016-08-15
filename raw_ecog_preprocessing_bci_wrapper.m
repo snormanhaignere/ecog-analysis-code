@@ -32,11 +32,8 @@ if ~exist(figure_directory, 'dir');
 end
 
 % create a hash string specific to the inputs and parameters to this function
-all_args = [exp, subjid, r, varargin];
-assert(length(all_args) == nargin);
-relevant_parameters = {P.bw_60Hz_peak_filt, P.hp_filt_order, ...
-    P.hp_filt_cutoff_in_Hz, P.notch_n_harmonics, P.notch_bw};
-hash_string = DataHash([all_args, relevant_parameters]); 
+hash_string = DataHash({exp, subjid, r, P.bw_60Hz_peak_filt, P.hp_filt_order, ...
+    P.hp_filt_cutoff_in_Hz, P.notch_n_harmonics, P.notch_bw});
 
 % check if mat file already exists
 MAT_file_with_preproc_signal = [analysis_directory ...
