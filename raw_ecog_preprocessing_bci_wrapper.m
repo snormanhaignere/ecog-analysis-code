@@ -7,11 +7,11 @@ function MAT_file_with_preproc_signal = ...
 %
 % 2016-08-12 - Created, Sam NH
 
-% preprocessing parameters
-P = preprocessing_parameters;
-
 % general-purpose ecog analysis code
 global root_directory;
+
+% parameters of the analysis
+P = preprocessing_parameters;
 
 % directory for this project
 project_directory = [root_directory '/' exp];
@@ -31,9 +31,16 @@ if ~exist(figure_directory, 'dir');
     mkdir(figure_directory);
 end
 
+% create a hash string specific to the inputs and parameters to this function
+all_args = [exp, subjid, r, varargin];
+assert(length(all_args) == nargin);
+relevant_parameters = {P.bw_60Hz_peak_filt, P.hp_filt_order, ...
+    P.hp_filt_cutoff_in_Hz, P.notch_n_harmonics, P.notch_bw};
+hash_string = DataHash([all_args, relevant_parameters]); 
+
 % check if mat file already exists
 MAT_file_with_preproc_signal = [analysis_directory ...
-    '/r' num2str(r) '_cleaned_signal.mat'];
+    '/r' num2str(r) '_cleaned_signal_' hash_string '.mat'];
 if exist(MAT_file_with_preproc_signal, 'file') && ~optInputs(varargin, 'overwrite')
     return;
 end
