@@ -17,5 +17,13 @@ P.notch_bw = 1; % 3 dB down/up in Hz
 
 % parameter of bandpass filters
 P.bandpass_env_sr = 100; 
-P.bandpass_cutoffs_in_Hz = [5 10; 25 50; 70 140]'; % cutoffs
+P.bandpass_cutoffs_in_Hz = [70 140]'; % cutoffs
 P.bandpass_filter_orders = 6 * ones(1,3); % order of filters, one per bandwidth
+
+% threshold used to detect outliers in envelopes
+% the threshold is sort of in units of standard deviation
+% but the standard deviation is measured using the difference between the median
+% of the distribution and the 84th percential, which for a gaussian would give a
+% single standard deviation, the advantage of this measure is that it's less
+% sensitive to outliers
+P.envelope_outlier_threshold = 6; 
