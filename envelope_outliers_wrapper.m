@@ -2,6 +2,8 @@ function envelope_outliers_wrapper(exp, subjid, r, envelope_MAT_file, varargin)
 
 % Detects outliers in ECoG envelopes. A wrapper for envelope_outliers.m. See
 % this function for details.
+% 
+% 2016-08-15 - Created, Sam NH
 
 % general-purpose ecog analysis code
 global root_directory;
