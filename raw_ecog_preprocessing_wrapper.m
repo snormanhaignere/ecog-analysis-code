@@ -1,7 +1,7 @@
 function MAT_file_with_preproc_signal = ...
-    raw_ecog_preprocessing_bci_wrapper(exp, subjid, r, varargin)
+    raw_ecog_preprocessing_wrapper(exp, subjid, r, varargin)
 
-% Preprocessing scripts applied to the raw ecog data stored as a bcidat file.
+% Preprocessing scripts applied to the raw ecog data stored as a MAT file.
 % Acts as a wrapper / file-handler for raw_ecog_preprocessing.m. Returns mat
 % files with the preprocessed ECoG signals for each run. As
 %
@@ -42,18 +42,14 @@ if exist(MAT_file_with_preproc_signal, 'file') && ~optInputs(varargin, 'overwrit
     return;
 end
 
-% load the raw data and parameters
-% convert to double precision
-bci_run_file = [data_directory '/r' num2str(r) '.dat'];
+% load the raw data and sampling rate
 fprintf('Loading signal...\n'); drawnow;
-[signal, ~, params, ~] = load_bcidat(bci_run_file);
-signal = double(signal);
-sr = params.SamplingRate.NumericValue;
+load([data_directory '/r' num2str(r) '.mat'], 'signal', 'sr');
 
 % preprocess the data
 [signal, good_channels, noise60Hz_rms] = ...
     raw_ecog_preprocessing(signal, sr, P, ...
-    figure_directory, ['r' num2str(r)], varargin{:}); %#ok<ASGLU>
+    figure_directory, ['r' num2str(r)], varargin{:}); %#ok<NODEF,ASGLU>
 
 % save to mat file
 save(MAT_file_with_preproc_signal, ...

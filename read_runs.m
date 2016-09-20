@@ -15,8 +15,8 @@ data_directory = [project_directory '/data/ECoG/' subjid '/'];
 files_in_data_directory = mydir(data_directory);
 runs = [];
 for i = 1:length(files_in_data_directory)
-    runstr = regexp(files_in_data_directory{i}, 'r(\d)+', 'match');
+    runstr = regexp(files_in_data_directory{i}, 'r(\d)+\.dat', 'match');
     if ~isempty(runstr)
-        runs = [runs, str2double(runstr{1}(2:end))]; %#ok<AGROW>
+        runs = [runs, str2double(regexp(runstr{1}, '(\d)+', 'match'))]; %#ok<AGROW>
     end
 end

@@ -1,4 +1,4 @@
-function plot_example_timecourses(signal, sr, good_channels, fig_file)
+function plot_electrode_timecourses(signal, sr, good_channels, fig_file)
 
 % Plots example electrode timecourses. Used to check preprocessing steps.
 % 

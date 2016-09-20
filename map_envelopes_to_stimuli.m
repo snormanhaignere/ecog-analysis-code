@@ -45,5 +45,5 @@ envelopes_mapped_to_stim = map_signal_to_stimulus_onsets(...
 
 % save results
 save(MAT_file_with_envelopes_mapped_to_stim, ...
-    'envelopes_mapped_to_stim', 'env_sr', 'resp_win');
+    'envelopes_mapped_to_stim', 'env_sr', 'resp_win', 'stim_names');
 
