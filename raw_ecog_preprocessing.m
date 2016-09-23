@@ -35,6 +35,12 @@ function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
 % by default assume all channels are good
 n_channels = size(signal,2);
 
+% directory to save figures with timecourses for individual electrodes
+single_electrode_directory = [figure_directory '/' figure_fname_prefix];
+if ~exist(single_electrode_directory, 'dir')
+    mkdir(single_electrode_directory);
+end
+
 % preprocessing steps
 steps = {'60Hz', 'highpass', 'car', 'notch'};
 if optInputs(varargin, 'steps');
@@ -55,15 +61,25 @@ else
     noise60Hz_rms = [];
 end
 
-% plot example timecourses and spectra
-% from a few good channels before any preprocessing
-plot_electrode_timecourses(signal, sr, good_channels, ...
-    [figure_directory '/' figure_fname_prefix ...
-    '_timecourse_0-raw']);
+% example good channels to plot in a mosaic
+n_channels_to_plot = 6;
+good_channels_to_plot = round(linspace(1,length(good_channels),n_channels_to_plot+2));
+good_channels_to_plot = good_channels_to_plot(2:end-1);
+
+keyboard;
+
+% plot electrode timecourses in a mosaic, and exhaustively for all electrodes
+plot_electrode_timecourses(signal(:,good_channels_to_plot), sr, ...
+    'electrode_numbers', good_channels_to_plot, ...
+    'single_mosaic', true, ...
+    'output_file', [figure_directory '/' figure_fname_prefix '_timecourse_0-raw']);
+plot_electrode_timecourses(signal, sr, ...
+    'output_file', [single_electrode_directory '/timecourse_0-raw']);
+
 
 plot_electrode_spectra(signal, sr, good_channels, ...
     [figure_directory '/' figure_fname_prefix ...
-    '_spectrum_0-raw']);
+    '_spectrum_0-raw'], I.single_mosaic, 'true');
 
 for i = 1:n_steps
     

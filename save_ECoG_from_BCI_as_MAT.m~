@@ -1,4 +1,4 @@
-function MAT_file = convert_BCI_to_MAT(exp, subjid, r, varargin)
+function MAT_file = s(exp, subjid, r, varargin)
 
 % Converts a BCI file to a MAT file
 % 
@@ -40,8 +40,13 @@ fprintf('Loading signal...\n'); drawnow;
 signal = double(signal);
 sr = parameters.SamplingRate.NumericValue;
 
+% select out the ECoG electrodes
+load([data_directory '/electrode_types.dat'], 'ecog');
+electrode_research_numbers = ecog;
+signal = signal(:,ecog);
+
 % save as MAT file
 save(MAT_file, 'signal', 'sr', 'states', ...
-    'parameters', 'total_samples', 'file_samples');
+    'parameters', 'total_samples', 'file_samples', 'electrode_research_numbers');
 
 
