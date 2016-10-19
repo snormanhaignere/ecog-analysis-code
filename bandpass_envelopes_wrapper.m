@@ -1,4 +1,5 @@
-function MAT_file_with_envelopes = bandpass_envelopes_wrapper(exp, subjid, r, signal_MAT_file, varargin)
+function MAT_file_with_envelopes = bandpass_envelopes_wrapper(...
+    exp, subjid, r, analysis_name, varargin)
 
 % Calculates envelopes of bandpassed ECoG signals.
 %
@@ -9,6 +10,8 @@ function MAT_file_with_envelopes = bandpass_envelopes_wrapper(exp, subjid, r, si
 % 2016-08-14: Created, Sam NH
 %
 % 2016-09-23: Minor changes, Sam NH
+% 
+% 2016-10-18: Removed hashing, added analysis name, Sam NH
 
 %% Setup
 
@@ -43,22 +46,20 @@ signal_matrix_loaded = false;
 MAT_file_with_envelopes = cell(1, n_bands);
 for i = 1:n_bands
     
-    % create a hash string specific to the inputs and parameters to this function
-    hash_string = DataHash({exp, subjid, r, signal_MAT_file, P.bandpass_env_sr, ...
-        P.bandpass_cutoffs_in_Hz(:,i),P.bandpass_filter_orders(i)});
-    
     % MAT file to save results to
     bp_freq_range_string = ...
         [num2str(P.bandpass_cutoffs_in_Hz(1,i)) ...
         '-' num2str(P.bandpass_cutoffs_in_Hz(2,i)) 'Hz'];
     MAT_file_with_envelopes{i} = [analysis_directory ...
-        '/envelopes_' bp_freq_range_string '_' hash_string '.mat'];
+        '/envelopes_' bp_freq_range_string '_' analysis_name '.mat'];
     
     % check if mat file already exists
     if ~exist(MAT_file_with_envelopes{i}, 'file') || I.overwrite
         
         % load signal matrix
         if ~signal_matrix_loaded
+            signal_MAT_file = [project_directory '/analysis/preprocessing' ...
+                '/' subjid '/r' num2str(r) '/cleaned_signal_' analysis_name '.mat'];
             load(signal_MAT_file, 'signal', 'sr', 'good_channels');
         end
         
