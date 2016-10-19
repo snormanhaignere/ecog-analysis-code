@@ -7,6 +7,7 @@ function MAT_file = save_ECoG_from_BCI_as_MAT(exp, subjid, r, varargin)
 global root_directory;
 
 I.overwrite = false;
+I.electrode_order = [];
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory for this project
@@ -16,7 +17,7 @@ project_directory = [root_directory '/' exp];
 data_directory = [project_directory '/data/ECoG/' subjid];
 
 % directory to save results to
-analysis_directory = [project_directory '/analysis/preprocessing/' subjid];
+analysis_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r)];
 if ~exist(analysis_directory, 'dir');
     mkdir(analysis_directory);
 end
@@ -28,7 +29,7 @@ if ~exist(figure_directory, 'dir');
 end
 
 % check if mat file already exists
-MAT_file = [data_directory '/r' num2str(r) '.mat'];
+MAT_file = [analysis_directory '/raw.mat'];
 if ~exist(MAT_file, 'file') || I.overwrite
     
     % load the raw data and parameters
@@ -41,11 +42,16 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % convert to double
     signal = double(signal);
     
+    % optionally chance ordering of electrodes
+    if ~isempty(I.electrode_order)
+        signal = signal(:,I.electrode_order);
+    end
+    
     % save sampling rate as separate variable
     sr = parameters.SamplingRate.NumericValue; %#ok<NASGU>
     
     % select ECoG electrodes
-    load([data_directory '/electrode_types.dat'], 'ecog');
+    load([data_directory '/electrode_types.mat'], 'ecog');
     electrode_research_numbers = ecog; %#ok<NASGU>
     signal = signal(:,ecog); %#ok<NASGU>
     

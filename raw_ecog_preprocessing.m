@@ -1,5 +1,5 @@
 function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
-    signal, sr, P, figure_directory, figure_fname_prefix, varargin)
+    signal, sr, P, figure_directory, varargin)
 
 % Preprocessing steps applied to the raw ecog data. Steps include
 %
@@ -12,19 +12,19 @@ function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
 % (3) Remove the common average reference of good channels.
 %
 % (4) Notch filter the signal to remove 60 Hz noise.
-% 
+%
 % Plots timecourses and spectra after each step.
-% 
+%
 % -- Input parameters --
-% 
+%
 % signal: [time x electrode] signal matrix
-% 
+%
 % sr: signal sampling rate in Hz
-% 
+%
 % P: parameter structure, see preprocessing_parameters.m
-% 
+%
 % figure_directory: directory to save plots to
-% 
+%
 % figure_fname_prefix: file name prefix for all plots
 %
 % 2016-07-19, Created by Sam NH
@@ -32,30 +32,28 @@ function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
 % 2016-08-12, Generalized to work with an arbitrary input signal and coded a
 % separate wrapper to handle data input/output
 
-% by default assume all channels are good
+% number of total channels
 n_channels = size(signal,2);
 
+% optional variables / inputs
+I.steps = {'60Hz', 'highpass', 'car', 'notch'};
+I.electrode_numbers = 1:n_channels;
+I.plot_all_electrodes = false;
+I = parse_optInputs_keyvalue(varargin, I);
+
 % directory to save figures with timecourses for individual electrodes
-single_electrode_directory = [figure_directory '/' figure_fname_prefix];
+single_electrode_directory = [figure_directory '/all-individual-electrodes'];
 if ~exist(single_electrode_directory, 'dir')
     mkdir(single_electrode_directory);
 end
 
-% preprocessing steps
-steps = {'60Hz', 'highpass', 'car', 'notch'};
-if optInputs(varargin, 'steps');
-    steps = varargin{optInputs(varargin, 'steps')+1};
-end
-n_steps = length(steps);
-
 % detect 60 Hz noise
-if any(strcmp('60Hz', steps))
+if any(strcmp('60Hz', I.steps))
     fprintf('Detecting good/bad channels with 60 Hz noise...\n');
     [good_channels, noise60Hz_rms] = ...
         channel_selection_from_60Hz_noise(signal, P, sr, ...
-        [figure_directory '/' figure_fname_prefix '_60Hz_noise']);
-    steps = setdiff(steps, '60Hz');
-    n_steps = length(steps);
+        [figure_directory '/60Hz_noise']);
+    I.steps = setdiff(I.steps, '60Hz');
 else
     good_channels = 1:n_channels;
     noise60Hz_rms = [];
@@ -63,28 +61,34 @@ end
 
 % example good channels to plot in a mosaic
 n_channels_to_plot = 6;
-good_channels_to_plot = round(linspace(1,length(good_channels),n_channels_to_plot+2));
-good_channels_to_plot = good_channels_to_plot(2:end-1);
-
-keyboard;
+xi = round(linspace(1,length(good_channels),n_channels_to_plot+2));
+good_channels_to_plot = good_channels(xi(2:end-1));
+clear xi;
 
 % plot electrode timecourses in a mosaic, and exhaustively for all electrodes
 plot_electrode_timecourses(signal(:,good_channels_to_plot), sr, ...
-    'electrode_numbers', good_channels_to_plot, ...
+    'electrode_numbers', I.electrode_numbers(good_channels_to_plot), ...
     'single_mosaic', true, ...
-    'output_file', [figure_directory '/' figure_fname_prefix '_timecourse_0-raw']);
-plot_electrode_timecourses(signal, sr, ...
-    'output_file', [single_electrode_directory '/timecourse_0-raw']);
+    'output_file', [figure_directory '/timecourse_0-raw']);
+if I.plot_all_electrodes
+    plot_electrode_timecourses(signal, sr, ...
+        'output_file', [single_electrode_directory '/timecourse_0-raw']);
+end
 
-
-plot_electrode_spectra(signal, sr, good_channels, ...
-    [figure_directory '/' figure_fname_prefix ...
-    '_spectrum_0-raw'], I.single_mosaic, 'true');
-
+% plot electrode spectra in a mosaic, and exhaustively for all electrodes
+plot_electrode_spectra(signal(:,good_channels_to_plot), sr, ...
+    'electrode_numbers', I.electrode_numbers(good_channels_to_plot), ...
+    'single_mosaic', true, ...
+    'output_file', [figure_directory '/spectrum_0-raw']);
+if I.plot_all_electrodes
+    plot_electrode_spectra(signal, sr, ...
+        'output_file', [single_electrode_directory '/spectrum_0-raw']);
+end
+n_steps = length(I.steps);
 for i = 1:n_steps
     
-    switch steps{i}
-            
+    switch I.steps{i}
+        
         case 'highpass'
             
             fprintf('High-pass filtering the signal...\n');
@@ -95,7 +99,7 @@ for i = 1:n_steps
             fprintf('Subtracting the average timecourse of good channels...\n');
             common_average = mean(signal(:,good_channels),2);
             signal = signal - common_average * ones(1,n_channels);
-
+            
         case 'notch'
             
             fprintf('Notch filtering line noise...\n');
@@ -103,19 +107,29 @@ for i = 1:n_steps
             
         otherwise
             
-            error('No matching step for %s\n', steps{i});
+            error('No matching step for %s\n', I.steps{i});
             
     end
     
-    % plot timecourses and spectra after each preprocessing step
-    plot_example_timecourses(signal, sr, good_channels, ...
-        [figure_directory '/' figure_fname_prefix ...
-        '_timecourse_' num2str(i) '-' steps{i}]);
+    % plot electrode timecourses in a mosaic, and exhaustively for all electrodes
+    plot_electrode_timecourses(signal(:,good_channels_to_plot), sr, ...
+        'electrode_numbers', I.electrode_numbers(good_channels_to_plot), ...
+        'single_mosaic', true, ...
+        'output_file', [figure_directory '/timecourse_' num2str(i) '-' I.steps{i}]);
+    if I.plot_all_electrodes
+        plot_electrode_timecourses(signal, sr, ...
+            'output_file', [single_electrode_directory '/timecourse_' num2str(i) '-' I.steps{i}]);
+    end
     
-    plot_example_spectra(signal, sr, good_channels, ...
-        [figure_directory '/' figure_fname_prefix ...
-        '_spectrum_' num2str(i) '-' steps{i}]);
-    
+    % plot electrode spectra in a mosaic, and exhaustively for all electrodes
+    plot_electrode_spectra(signal(:,good_channels_to_plot), sr, ...
+        'electrode_numbers', I.electrode_numbers(good_channels_to_plot), ...
+        'single_mosaic', true, ...
+        'output_file', [figure_directory '/spectrum_' num2str(i) '-' I.steps{i}]);
+    if I.plot_all_electrodes
+        plot_electrode_spectra(signal, sr, ...
+            'output_file', [single_electrode_directory '/spectrum_' num2str(i) '-' I.steps{i}]);
+    end
 end
 
 close all;

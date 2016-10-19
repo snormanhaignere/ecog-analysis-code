@@ -5,10 +5,14 @@ function MAT_file_with_preproc_signal = ...
 % Acts as a wrapper / file-handler for raw_ecog_preprocessing.m. Returns mat
 % files with the preprocessed ECoG signals for each run. As
 %
-% 2016-08-12 - Created, Sam NH
+% 2016-08-12: Created, Sam NH
+%
+% 2016-09-23: Changed how optional inputs are handled, Sam NH
 
-% general-purpose ecog analysis code
 global root_directory;
+
+I.overwrite = false;
+I = parse_optInputs_keyvalue(varargin, I);
 
 % parameters of the analysis
 P = preprocessing_parameters;
@@ -16,11 +20,8 @@ P = preprocessing_parameters;
 % directory for this project
 project_directory = [root_directory '/' exp];
 
-% directory with the data for this experiment
-data_directory = [project_directory '/data/ECoG/' subjid];
-
 % directory to save results to
-analysis_directory = [project_directory '/analysis/preprocessing/' subjid];
+analysis_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r)];
 if ~exist(analysis_directory, 'dir');
     mkdir(analysis_directory);
 end
@@ -37,24 +38,24 @@ hash_string = DataHash({exp, subjid, r, P.bw_60Hz_peak_filt, P.hp_filt_order, ..
 
 % check if mat file already exists
 MAT_file_with_preproc_signal = [analysis_directory ...
-    '/r' num2str(r) '_cleaned_signal_' hash_string '.mat'];
-if exist(MAT_file_with_preproc_signal, 'file') && ~optInputs(varargin, 'overwrite')
-    return;
+    '/cleaned_signal_' hash_string '.mat'];
+if ~exist(MAT_file_with_preproc_signal, 'file') || I.overwrite
+    
+    % load the raw data and sampling rate
+    fprintf('Loading signal...\n'); drawnow;
+    load([analysis_directory '/raw.mat'], ...
+        'signal', 'sr', 'electrode_research_numbers');
+    
+    % preprocess the data
+    [signal, good_channels, noise60Hz_rms] = ...
+        raw_ecog_preprocessing(signal, sr, P, figure_directory,...
+        'electrode_numbers', electrode_research_numbers); %#ok<NODEF,ASGLU>
+    
+    % save to mat file
+    save(MAT_file_with_preproc_signal, ...
+        'signal', 'good_channels', 'noise60Hz_rms', 'sr', 'r');
+    
 end
-
-% load the raw data and sampling rate
-fprintf('Loading signal...\n'); drawnow;
-load([data_directory '/r' num2str(r) '.mat'], 'signal', 'sr');
-
-% preprocess the data
-[signal, good_channels, noise60Hz_rms] = ...
-    raw_ecog_preprocessing(signal, sr, P, ...
-    figure_directory, ['r' num2str(r)], varargin{:}); %#ok<NODEF,ASGLU>
-
-% save to mat file
-save(MAT_file_with_preproc_signal, ...
-    'signal', 'good_channels', 'noise60Hz_rms', 'sr', 'r');
-
 
 
 

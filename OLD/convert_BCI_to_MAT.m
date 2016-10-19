@@ -1,4 +1,4 @@
-function MAT_file = s(exp, subjid, r, varargin)
+function MAT_file = convert_BCI_to_MAT(exp, subjid, r, varargin)
 
 % Converts a BCI file to a MAT file
 % 

@@ -6,9 +6,14 @@ function MAT_file_with_envelopes = bandpass_envelopes_wrapper(exp, subjid, r, si
 % contain a matrix 'signal' with the input signal, a variable 'sr' with the
 % signal's sampling rate.
 %
-% 2016-08-14 - Created, Sam NH
+% 2016-08-14: Created, Sam NH
+%
+% 2016-09-23: Minor changes, Sam NH
 
 %% Setup
+
+I.overwrite = false;
+I = parse_optInputs_keyvalue(varargin, I);
 
 global root_directory
 
@@ -16,7 +21,7 @@ global root_directory
 project_directory = [root_directory '/' exp];
 
 % directory to save results to
-analysis_directory = [project_directory '/analysis/preprocessing/' subjid];
+analysis_directory = [project_directory '/analysis/envelopes/' subjid '/r' num2str(r)];
 if ~exist(analysis_directory, 'dir');
     mkdir(analysis_directory);
 end
@@ -24,7 +29,7 @@ end
 % directory to save figures to
 figure_directory = strrep(analysis_directory, 'analysis', 'figures');
 if ~exist(figure_directory, 'dir');
-    mkdir(analysis_directory);
+    mkdir(figure_directory);
 end
 
 % parameters of the filters
@@ -47,29 +52,28 @@ for i = 1:n_bands
         [num2str(P.bandpass_cutoffs_in_Hz(1,i)) ...
         '-' num2str(P.bandpass_cutoffs_in_Hz(2,i)) 'Hz'];
     MAT_file_with_envelopes{i} = [analysis_directory ...
-        '/r' num2str(r) '_envelopes_' bp_freq_range_string '_' hash_string '.mat'];
+        '/envelopes_' bp_freq_range_string '_' hash_string '.mat'];
     
     % check if mat file already exists
-    if exist(MAT_file_with_envelopes{i}, 'file') && ~optInputs(varargin, 'overwrite')
-        continue;
+    if ~exist(MAT_file_with_envelopes{i}, 'file') || I.overwrite
+        
+        % load signal matrix
+        if ~signal_matrix_loaded
+            load(signal_MAT_file, 'signal', 'sr', 'good_channels');
+        end
+        
+        % measure envelopes
+        fprintf('Extracting envelopes for band %s...\n', bp_freq_range_string);
+        envelopes = bandpass_envelopes(signal, sr, P.bandpass_env_sr, ...
+            P.bandpass_cutoffs_in_Hz(:,i), P.bandpass_filter_orders(i),...
+            figure_directory); %#ok<*NASGU>
+        
+        % save to file
+        env_sr = P.bandpass_env_sr;
+        band_in_Hz = P.bandpass_cutoffs_in_Hz(:,i);
+        save(MAT_file_with_envelopes{i}, 'envelopes', 'env_sr', 'band_in_Hz', ...
+            'good_channels', 'P', 'r');
+        
     end
-    
-    % load signal matrix
-    if ~signal_matrix_loaded
-        load(signal_MAT_file, 'signal', 'sr', 'good_channels');
-    end
-    
-    % measure envelopes
-    fprintf('Extracting envelopes for band %s...\n', bp_freq_range_string);
-    envelopes = bandpass_envelopes(signal, sr, P.bandpass_env_sr, ...
-        P.bandpass_cutoffs_in_Hz(:,i), P.bandpass_filter_orders(i),...
-        figure_directory, ['r' num2str(r) '_bpfilt_' bp_freq_range_string], ...
-        good_channels, varargin); %#ok<*NASGU>
-    
-    % save to file
-    env_sr = P.bandpass_env_sr;
-    band_in_Hz = P.bandpass_cutoffs_in_Hz(:,i);
-    save(MAT_file_with_envelopes{i}, 'envelopes', 'env_sr', 'band_in_Hz', ...
-        'good_channels', 'P', 'r');
     
 end

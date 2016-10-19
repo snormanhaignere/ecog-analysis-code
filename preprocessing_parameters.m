@@ -5,6 +5,13 @@ function P = preprocessing_parameters
 % parameter value derived from schalk lab code
 P.bw_60Hz_peak_filt = 0.6;
 
+% minimum fraction of good electrodes
+% used to detect bad channels from 60 Hz noise
+P.min_fraction_of_good_electrodes = 0.2;
+
+% threshold used to detect bad electrodes as outliers
+P.electrode_outlier_threshold = 5;
+
 % filter order and cutoff of the highpass filter
 % used to remove very low frequencies
 % parameters values derived from schalk lab code
