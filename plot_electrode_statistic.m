@@ -1,6 +1,9 @@
-function plot_electrode_statistic(stat, stat_name)    
+function plot_electrode_statistic(stat, stat_name, varargin)
 
 n_electrodes = length(stat);
+
+I.ylim = [];
+I = parse_optInputs_keyvalue(varargin, I);
 
 % plot median reliability across stimuli
 n_electrodes_per_row = 50;
@@ -23,7 +26,11 @@ for j = 1:ceil(n_electrodes / n_electrodes_per_row)
     bar(1:length(electrodes_to_plot),  stat(electrodes_to_plot), 'FaceColor', [0.5 0.5 0.5]);
     set(gca, 'FontSize', 6);
     xlim([0 n_electrodes_per_row+1]);
-    ylim([0 max(stat(:))*1.05]);
+    if ~isempty(I.ylim)
+        ylim(I.ylim);
+    else
+        ylim([0 max(stat(:))*1.05]);
+    end
     grid on;
     set(gca, 'XTick', 1:length(electrodes_to_plot), 'XTickLabel',electrodes_to_plot);
 end
