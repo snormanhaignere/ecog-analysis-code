@@ -10,6 +10,7 @@ I.cmap_range = [min(electrode_activations), max(electrode_activations)];
 I.fading = 0;
 I.only_plot_given_electrodes = false;
 I.figh = matlab.ui.Figure.empty;
+I.plot_electrode_numbers = false;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % load brain model in talaraich coordinates
@@ -78,11 +79,19 @@ set(I.figh, 'Position', [0 0 1000 600]);
 activateBrain_colorelectrodes(cortex, vcontribs, tala, ix, ...
     cmapstruct, viewstruct, tala.activations, I.radii);
 
+if I.plot_electrode_numbers
+    plotElNums(tala.trielectrodes*1.1,electrode_indices,4,'k');
+end
+
 % save
 if ~isempty(I.figname)
     box off;    
     set(gcf, 'PaperSize', [10 6]);
     set(gcf, 'PaperPosition', [0.25 0.25 9.5 5.5]);
     print([I.figname '.pdf'],'-dpdf');
-    print([I.figname '.png'],'-dpng', '-r200');
+    if I.plot_electrode_numbers
+        print([I.figname '.png'],'-dpng', '-r300');
+    else
+        print([I.figname '.png'],'-dpng', '-r200');
+    end
 end
