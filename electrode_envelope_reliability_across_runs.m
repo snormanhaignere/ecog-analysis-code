@@ -96,8 +96,13 @@ if ~exist(MAT_file, 'file') || I.overwrite
             [n_smps, n_stimuli, ~, n_electrodes] = size(envelopes_mapped_to_stim);
             D = nan([n_smps, n_stimuli, n_runs, n_electrodes]);
         end
-        envelopes_mapped_to_stim(logical(outliers_mapped_to_stim)) = NaN; %#ok<AGROW>
-        D(:,:,i,:) = nanmean(envelopes_mapped_to_stim,3);
+        try
+            outliers_mapped_to_stim(isnan(outliers_mapped_to_stim)) = 0;
+            envelopes_mapped_to_stim(logical(outliers_mapped_to_stim)) = NaN; %#ok<AGROW>
+            D(:,:,i,:) = nanmean(envelopes_mapped_to_stim,3);
+        catch
+            keyboard
+        end
         
     end
     
@@ -114,17 +119,16 @@ if ~exist(MAT_file, 'file') || I.overwrite
         xi = t >= I.win(1) & t <=I.win(2);
         D = D(xi,:,:,:);
         n_smps = size(D,1);
-        D = reshape(D, [n_smps * n_stimuli, n_runs, n_electrodes]);
         t = t(xi); %#ok<NASGU>
     end
     
     % optionally average across time
     if I.time_average
-        D = squeeze_dims(mean(D,1),1);
+        D = squeeze_dims(nanmean(D,1),1);
     else
         D = reshape(D,[n_smps * n_stimuli, n_runs, n_electrodes]);
     end
-    
+        
     % reliability per electrode
     reliability_corr = nan(1, n_electrodes);
     for i = 1:n_electrodes
