@@ -12,11 +12,14 @@ project_directory = [root_directory '/' exp];
 data_directory = [project_directory '/data/ECoG/' subjid '/'];
 
 % parse run numbers from files in data directory
-files_in_data_directory = mydir(data_directory);
+files_in_data_directory = mydir(data_directory, '.dat');
+if isempty(files_in_data_directory)
+    files_in_data_directory = mydir(data_directory, '.mat');
+end
 runs = [];
 for i = 1:length(files_in_data_directory)
-    runstr = regexp(files_in_data_directory{i}, 'r(\d)+\.dat', 'match');
+    runstr = regexp(files_in_data_directory{i}, 'r(\d)+', 'match');
     if ~isempty(runstr)
-        runs = [runs, str2double(regexp(runstr{1}, '(\d)+', 'match'))]; %#ok<AGROW>
+        runs = [runs, str2double(runstr{1}(2:end))]; %#ok<AGROW>
     end
 end
