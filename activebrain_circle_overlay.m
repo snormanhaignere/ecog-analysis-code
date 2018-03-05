@@ -2,16 +2,26 @@ function activebrain_circle_overlay(exp, subjid, hemi, electrode_activations, el
 
 % requires activeBrain and export_fig_v2
 
+if isvector(electrode_activations)
+    electrode_activations = electrode_activations(:);
+end
+
 % default parameters
 I.radii = 2.5;
 I.figname = '';
 I.cmap = [];
-I.cmap_range = [min(electrode_activations), max(electrode_activations)];
+I.cmap_range = [min(electrode_activations(:)), max(electrode_activations(:))];
 I.fading = 0;
 I.only_plot_given_electrodes = false;
 I.figh = matlab.ui.Figure.empty;
 I.plot_electrode_numbers = false;
+I.activations_are_colors = false;
+I.keyboard = false;
 I = parse_optInputs_keyvalue(varargin, I);
+
+if I.keyboard
+    keyboard;
+end
 
 % load brain model in talaraich coordinates
 load([root_directory '/' exp '/data/Anatomical/' subjid '/BrainModel.mat'], ...
@@ -38,7 +48,7 @@ end
 
 % set activations
 if I.only_plot_given_electrodes
-    tala.activations = electrode_activations';
+    tala.activations = electrode_activations;
     tala.electrodes = tala.electrodes(electrode_indices,:);
     tala.trielectrodes = tala.trielectrodes(electrode_indices,:);
     vcontribs_new = [];
@@ -53,9 +63,9 @@ if I.only_plot_given_electrodes
     end
     vcontribs = vcontribs_new;
 else
-    tala.activations = zeros(size(tala.electrodes,1),1);
+    tala.activations = zeros(size(tala.electrodes,1), size(electrode_activations,2));
     [~,xi] = intersect(electrode_indices, 1:size(tala.electrodes,1));
-    tala.activations(electrode_indices(xi)) = electrode_activations(xi);
+    tala.activations(electrode_indices(xi),:) = electrode_activations(xi,:);
     clear xi;
 end
 
