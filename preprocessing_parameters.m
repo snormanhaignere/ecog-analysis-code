@@ -19,7 +19,7 @@ P.hp_filt_order = 4;
 P.hp_filt_cutoff_in_Hz = 0.5;
 
 % parameters of the notch filter used to remove 60 Hz noise and its harmonics
-P.notch_n_harmonics = 4;
+P.notch_freqs = [60, 120, 160, 240];
 P.notch_bw = 1; % 3 dB down/up in Hz
 
 % parameter of bandpass filters
