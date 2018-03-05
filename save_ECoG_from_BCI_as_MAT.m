@@ -3,12 +3,21 @@ function MAT_file = save_ECoG_from_BCI_as_MAT(exp, subjid, r, varargin)
 % Saves ECoG data from BCI .dat file as a .mat file
 %
 % 2016-09-23: Created, Sam NH
+% 
+% 2018-03-03: Added debug mode, make it possible to skip trigger assignment
 
 global root_directory;
 
 I.overwrite = false;
 I.electrode_order = [];
+I.keyboard = false;
+I.skip_audio_trigger = false;
 I = parse_optInputs_keyvalue(varargin, I);
+
+% debug mode
+if I.keyboard;
+    keyboard;
+end
 
 % directory for this project
 project_directory = [root_directory '/' exp];
@@ -36,9 +45,15 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % convert to double precision
     bci_run_file = [data_directory '/r' num2str(r) '.dat'];
     fprintf('Loading signal...\n'); drawnow;
-    [ signal, states, parameters, total_samples, file_samples ] ...
-        = load_bcidat(bci_run_file); %#ok<ASGLU>
-    
+    try
+        %         [ signal, states, parameters, total_samples, file_samples ] ...
+        %             = load_bcidat(bci_run_file); %#ok<ASGLU>
+        [ signal, states, parameters, total_samples ] ...
+            = load_bcidat(bci_run_file); %#ok<ASGLU>
+    catch
+        keyboard;
+    end
+        
     % convert to double
     signal = double(signal);
     
@@ -50,15 +65,29 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % save sampling rate as separate variable
     sr = parameters.SamplingRate.NumericValue; %#ok<NASGU>
     
+    % separate out and save audio trigger
+    if ~I.skip_audio_trigger
+        load([data_directory '/electrode_types.mat'], 'audio_trigger');
+        if isnumeric(audio_trigger)
+            audio_trigger_signal = signal(:,audio_trigger); %#ok<NASGU>
+        elseif ischar(audio_trigger)
+            audio_trigger_signal = states.(audio_trigger); %#ok<NASGU>
+        else
+            error('Conditional fell through');
+        end
+    else
+        audio_trigger_signal = [];
+    end
+    
     % select ECoG electrodes
     load([data_directory '/electrode_types.mat'], 'ecog');
     electrode_research_numbers = ecog; %#ok<NASGU>
-    signal = signal(:,ecog); %#ok<NASGU>
-    
+    signal = signal(:,ecog);    
+
     % save as MAT file
     save(MAT_file, 'signal', 'sr', 'states', ...
         'parameters', 'total_samples', ...
-        'file_samples', 'electrode_research_numbers');
+        'electrode_research_numbers', 'audio_trigger_signal');
     
 end
 
