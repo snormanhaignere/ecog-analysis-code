@@ -6,11 +6,17 @@ function para_file = save_stim_timings_in_bci_as_para(exp, subjid, r, varargin)
 % information as a paradigm file.
 %
 % 2016-08-19 - Created Sam NH
+% 
+% 2018-03-02: Modified to make it optional as to whether the stimulus names are
+% read from the parameter structure in the BCI file. The alternative is to read
+% the names from the analysis/stim_names.mat, in which case the order of the
+% stimuli in the MAT file should match the indices.
 
 global root_directory
 
 I.fn_to_stim_name = @(x)x;
 I.overwrite = false;
+I.stim_names_from_bci = true;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory for this project
@@ -35,7 +41,8 @@ if ~exist(para_file, 'file') || I.overwrite
     
     % determine onsets and durations from bci file
     [ons_in_sec, dur_in_sec, stim_name_for_each_onset, stim_ids] = ...
-        stim_onsets_from_bci(bci.states, bci.parameters);
+        stim_onsets_from_bci(bci.states, bci.parameters, ...
+        'stim_names_from_bci', I.stim_names_from_bci, 'exp', exp);
     
     % write to para file
     fid = fopen(para_file, 'w');
