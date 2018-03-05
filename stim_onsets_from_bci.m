@@ -1,5 +1,5 @@
 function [ons_in_sec, dur_in_sec, stim_names, stim_ids] ...
-    = stim_onsets_from_bci(bci_states, bci_parameters)
+    = stim_onsets_from_bci(bci_states, bci_parameters, varargin)
 
 % function [ons_in_sec, dur_in_sec, stim_names, stim_ids] =
 % stim_onsets_from_bci(bci_states, bci_parameters)
@@ -28,6 +28,15 @@ function [ons_in_sec, dur_in_sec, stim_names, stim_ids] ...
 % 
 % 2016-08-19 - Modified to measure durations of each period, NULL periods are no
 % longer removed but flagged as such
+% 
+% 2018-03-02: Modified to make it optional as to whether the stimulus names are
+% read from the parameter structure in the BCI file. The alternative is to read
+% the names from the analysis/stim_names.mat, in which case the order of the
+% stimuli in the MAT file should match the indices.
+
+I.stim_names_from_bci = true;
+I.exp = '';
+I = parse_optInputs_keyvalue(varargin, I);
 
 bci_states.StimulusCode = double(bci_states.StimulusCode);
 
@@ -46,9 +55,15 @@ stim_ids = bci_states.StimulusCode(onsets_smps);
 % stim_ids = stim_ids(xi);
 
 % corresponding names for each id
-stim_names = cell(1, length(stim_ids));
-stim_names(stim_ids~=0) = bci_parameters.Stimuli.Value(1,stim_ids(stim_ids~=0));
-stim_names(stim_ids==0) = {'NULL'};
+if I.stim_names_from_bci
+    stim_names = cell(1, length(stim_ids));
+    stim_names(stim_ids~=0) = bci_parameters.Stimuli.Value(1,stim_ids(stim_ids~=0));
+    stim_names(stim_ids==0) = {'NULL'};
+else
+    X = load([root_directory '/' I.exp '/analysis/stim_names.mat'],'stim_names');
+    stim_names(stim_ids~=0) = X.stim_names(stim_ids(stim_ids~=0));
+    stim_names(stim_ids==0) = {'NULL'};
+end
 
 % convert samples to seconds
 raw_ecog_sr = bci_parameters.SamplingRate.NumericValue;
