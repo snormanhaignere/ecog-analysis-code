@@ -33,6 +33,7 @@ n_channels = size(signal,2);
 I.good_channels = 1:n_channels;
 I.electrode_numbers = 1:n_channels;
 % I.plot_all_electrodes = false;
+I.plot = true;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory to save figures with timecourses/spectra for individual electrodes
@@ -61,6 +62,10 @@ env = resample(env, env_sr, signal_sr);
 
 % truncate
 env(env < 0) = 0;
+
+if ~I.plot
+    return;
+end
 
 %% Plot subband timecourses and spectra
 

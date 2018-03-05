@@ -1,5 +1,5 @@
 function MAT_file_with_envelopes = bandpass_envelopes_wrapper(...
-    exp, subjid, r, analysis_name, varargin)
+    exp, subjid, r, analysis_name, P, varargin)
 
 % Calculates envelopes of bandpassed ECoG signals.
 %
@@ -12,6 +12,8 @@ function MAT_file_with_envelopes = bandpass_envelopes_wrapper(...
 % 2016-09-23: Minor changes, Sam NH
 % 
 % 2016-10-18: Removed hashing, added analysis name, Sam NH
+% 
+% 2016-10-18: Preprocessing parameter structure now an argument, Sam NH
 
 %% Setup
 
@@ -34,9 +36,6 @@ figure_directory = strrep(analysis_directory, 'analysis', 'figures');
 if ~exist(figure_directory, 'dir');
     mkdir(figure_directory);
 end
-
-% parameters of the filters
-P = preprocessing_parameters;
 
 %% loop through runs
 
@@ -73,7 +72,7 @@ for i = 1:n_bands
         env_sr = P.bandpass_env_sr;
         band_in_Hz = P.bandpass_cutoffs_in_Hz(:,i);
         save(MAT_file_with_envelopes{i}, 'envelopes', 'env_sr', 'band_in_Hz', ...
-            'good_channels', 'P', 'r');
+            'good_channels', 'P', 'r', '-v7.3');
         
     end
     
