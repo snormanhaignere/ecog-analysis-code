@@ -41,6 +41,6 @@ if ~outliers_exist || I.overwrite
         env_sr, figure_directory); %#ok<NASGU>
     
     % save results
-    save(envelope_MAT_file, 'outliers', '-append');
+    save(envelope_MAT_file, 'outliers', '-append', '-v7.3');
     
 end

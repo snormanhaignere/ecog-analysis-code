@@ -11,6 +11,8 @@ function [outliers, multiscale_outliers] ...
 
 I.scales = [0 0.25 1 4];
 I.thresholds = [5 2.5 2 1.5];
+I.plot_mosaic = true;
+I.plot_individ_electrodes = false;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % total number of channels
@@ -38,17 +40,29 @@ clear sd;
 % time vector used for plotting
 t = (0:size(envelopes,1)-1)/env_sr;
 
+if I.plot_individ_electrodes
+    individual_electrode_directory = [figure_directory '/individual-electrodes'];
+    if ~exist(individual_electrode_directory, 'dir');
+        mkdir(individual_electrode_directory);
+    end
+end
+
 %% loop through channels
 
-figh = figure;
+if I.plot_mosaic || I.plot_individ_electrodes
+    figh = figure;
+end
 fig_pdfs = cell(1,n_channels);
 outliers = false(size(envelopes));
 multiscale_outliers = false([size(envelopes), n_scales]);
 for q = 1:n_channels
     
-    clf(figh);
-    set(figh, 'Position', [100 100 1200 n_scales*150]);
-    for i = 1:4%n_scales
+    if I.plot_individ_electrodes
+        clf(figh);
+        set(figh, 'Position', [100 100 1200 n_scales*150]);
+    end
+    
+    for i = 1:n_scales
         if I.scales(i,q) == 0
             z = Z(:,q);
         else
@@ -59,62 +73,85 @@ for q = 1:n_channels
         
         multiscale_outliers(:,q,i) = z > I.thresholds(i,q);
         
-        sbpt = subplot(n_scales,1,i);
-        set(sbpt,'Position', [0.1, 1-(1/n_scales)*i+0.06, 0.8, 0.15]);
-        plot(t, z, 'r-', 'LineWidth', 0.1); hold on;
-        z(multiscale_outliers(:,q,i)) = NaN;
-        plot(t, z, 'k-', 'LineWidth', 0.1);
-        plot([0 t(end)], I.thresholds(i,q)*[1 1], 'r--', 'LineWidth', 0.1);
-        xlim([0 t(end)]);
-        ylim([0 I.thresholds(i,q)*3]);
+        if I.plot_individ_electrodes
+            sbpt = subplot(n_scales,1,i);
+            set(sbpt,'Position', [0.1, 1-(1/n_scales)*i+0.06, 0.8, 0.15]);
+            plot(t, z, 'r-', 'LineWidth', 0.1); hold on;
+            z(multiscale_outliers(:,q,i)) = NaN;
+            plot(t, z, 'k-', 'LineWidth', 0.1);
+            plot([0 t(end)], I.thresholds(i,q)*[1 1], 'r--', 'LineWidth', 0.1);
+            xlim([0 t(end)]);
+            ylim([0 I.thresholds(i,q)*3]);
+        end
     end
     
-    % save as matlab figure
-    saveas(gcf, [figure_directory '/electrode' num2str(q) '-allscales.fig']);
-    
-    % save as pdf
-    set(gcf, 'PaperSize', [8, n_scales*2]);
-    set(gcf, 'PaperPosition', [0.25, 0.25, 7.5, n_scales*2-0.5]);
-    print([figure_directory '/electrode' num2str(q) '-allscales.pdf'],'-dpdf');
+    % save
+    if I.plot_individ_electrodes
+        % save as matlab figure
+        saveas(gcf, [individual_electrode_directory '/electrode' num2str(q) '-allscales.fig']);
+        
+        % save as pdf
+        set(gcf, 'PaperSize', [8, n_scales*2]);
+        set(gcf, 'PaperPosition', [0.25, 0.25, 7.5, n_scales*2-0.5]);
+        print([individual_electrode_directory '/electrode' num2str(q) '-allscales.pdf'],'-dpdf');
+    end
     
     % collapse across all outliers
     outliers(:,q) = any(multiscale_outliers(:,q,:), 3);
     
     % plot with outliers from al scales
-    clf(figh);
-    set(figh, 'Position', [100 100 1200 150]);
-    z = Z(:,q);
-    plot(t, z, 'r-', 'LineWidth', 0.1); hold on;
-    z(outliers(:,q)) = NaN;
-    plot(t, z, 'k-', 'LineWidth', 0.1);
-    xlim([0 t(end)]);
-    ylim([0 10]);
-    
-    % save as matlab figure
-    saveas(gcf, [figure_directory '/electrode' num2str(q) '.fig']);
-    
-    % save as pdf
-    set(gcf, 'PaperSize', [8, 2]);
-    set(gcf, 'PaperPosition', [0.25, 0.25, 7.5, 1.5]);
-    print([figure_directory '/electrode' num2str(q) '.pdf'],'-dpdf');
-    
-    % expand along x-dimension and save as pdf
-    box off;
-    sbpt = subplot(1,1,1);
-    set(sbpt,'Position', [0 0 1 1]);
-    set(gca, 'XTick',[],'YTick',[]);
-    fig_pdfs{q} = [figure_directory '/electrode' num2str(q) '-expanded.pdf'];
-    set(gcf, 'PaperSize', [40, 1]);
-    set(gcf, 'PaperPosition', [1, 0.25, 38, 0.5]);
-    print(fig_pdfs{q},'-dpdf');
+    if I.plot_individ_electrodes
+        clf(figh);
+        set(figh, 'Position', [100 100 1200 150]);
+        z = Z(:,q);
+        plot(t, z, 'r-', 'LineWidth', 0.1); hold on;
+        z(outliers(:,q)) = NaN;
+        plot(t, z, 'k-', 'LineWidth', 0.1);
+        xlim([0 t(end)]);
+        ylim([0 10]);
+        title(sprintf('elec %d', q));
         
+        % save as matlab figure
+        saveas(gcf, [individual_electrode_directory '/electrode' num2str(q) '.fig']);
+        
+        % save as pdf
+        set(gcf, 'PaperSize', [8, 2]);
+        set(gcf, 'PaperPosition', [0.25, 0.25, 7.5, 1.5]);
+        print([individual_electrode_directory '/electrode' num2str(q) '.pdf'],'-dpdf');
+        
+        % expand along x-dimension and save as pdf
+        box off;
+        sbpt = subplot(1,1,1);
+        set(sbpt,'Position', [0 0 1 1]);
+        set(gca, 'XTick',[],'YTick',[]);
+        fig_pdfs{q} = [individual_electrode_directory '/electrode' num2str(q) '-expanded.pdf'];
+        set(gcf, 'PaperSize', [40, 1]);
+        set(gcf, 'PaperPosition', [1, 0.25, 38, 0.5]);
+        print(fig_pdfs{q},'-dpdf');
+    end        
 end
 
-% plot mosaic
-for i = 1:ceil(n_channels/20);
-    xi = (1:20) + (i-1)*20;
-    xi = intersect(xi, 1:size(envelopes,2));
-    append_pdfs([figure_directory '/mosaic-electrodes' num2str(xi(1)) '-' num2str(xi(end)) '.pdf'], fig_pdfs{xi});
+% pdf with sets of electrodes for ease of viewing
+if I.plot_individ_electrodes
+    for i = 1:ceil(n_channels/20);
+        xi = (1:20) + (i-1)*20;
+        xi = intersect(xi, 1:size(envelopes,2));
+        append_pdfs([figure_directory '/mosaic-electrodes' num2str(xi(1)) '-' num2str(xi(end)) '.pdf'], fig_pdfs{xi});
+    end
+end
+
+if I.plot_mosaic
+    
+    mean_outliers = 100*mean(any(multiscale_outliers, 3), 1);
+    plot_electrode_statistic(mean_outliers, '% Outliers');
+    
+    % save as pdf
+    fig_dims = get(gcf, 'Position');
+    set(gcf, 'PaperSize', fig_dims(3:4)/130);
+    set(gcf, 'PaperPosition', [0.25, 0.25, (fig_dims(3:4)/130-0.25)]);
+    print([figure_directory '/mean-number-of-outliers.pdf'],'-dpdf');
+    saveas(gcf, [figure_directory '/mean-number-of-outliers.fig']);
+    
 end
 
 
