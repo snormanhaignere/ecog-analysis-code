@@ -10,7 +10,12 @@ function MAT_file_with_envelopes_mapped_to_stim = ...
 
 I.overwrite = false;
 I.remove_1backs = false;
+I.keyboard = false;
 I = parse_optInputs_keyvalue(varargin, I);
+
+if I.keyboard
+    keyboard;
+end
 
 global root_directory;
 
@@ -34,13 +39,18 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
     % NULL periods are removed
     para_file = [root_directory '/' exp '/data/para/' subjid '/r' num2str(r) '.par'];
     t = stim_timing_from_para(para_file, 'remove-NULL');
-    
+           
     % can optionally remove back to back presentations of the same stimulus
     if I.remove_1backs
-        repeated_blocks = find([false; diff(t.ids)==0]);
-        t.names(repeated_blocks) = [];
-        t.ons_in_sec(repeated_blocks) = [];
-        t.ids(repeated_blocks) = [];
+        rep1back = false(1,length(t.names));
+        for i = 2:length(t.names)
+            rep1back(i) = strcmp(t.names{i-1}, t.names{i});
+        end
+        t.names(rep1back) = [];
+        t.ons_in_sec(rep1back) = [];
+        t.dur_in_sec(rep1back) = [];
+        t.ids(rep1back) = [];
+        clear rep1back;
     end
     
     % map the enevelopes to the stimuli
@@ -54,6 +64,6 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
     % save results
     save(MAT_file_with_envelopes_mapped_to_stim, ...
         'envelopes_mapped_to_stim', 'outliers_mapped_to_stim',...
-        'env_sr', 'resp_win', 'stim_names');
+        'env_sr', 'resp_win', 'stim_names', '-v7.3');
     
 end
