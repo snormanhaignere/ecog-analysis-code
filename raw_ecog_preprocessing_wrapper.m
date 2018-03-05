@@ -1,5 +1,5 @@
 function MAT_file_with_preproc_signal = ...
-    raw_ecog_preprocessing_wrapper(exp, subjid, r, analysis_name, varargin)
+    raw_ecog_preprocessing_wrapper(exp, subjid, r, analysis_name, P, varargin)
 
 % Preprocessing scripts applied to the raw ecog data stored as a MAT file.
 % Acts as a wrapper / file-handler for raw_ecog_preprocessing.m. Returns mat
@@ -10,14 +10,13 @@ function MAT_file_with_preproc_signal = ...
 % 2016-09-23: Changed how optional inputs are handled, Sam NH
 % 
 % 2016-10-18: Removed hashing, added analysis name, Sam NH
+% 
+% 2018-01-23: Preprocessing parameters are now an input to the function
 
 global root_directory;
 
 I.overwrite = false;
 I = parse_optInputs_keyvalue(varargin, I);
-
-% parameters of the analysis
-P = preprocessing_parameters;
 
 % directory for this project
 project_directory = [root_directory '/' exp];
@@ -51,7 +50,7 @@ if ~exist(MAT_file_with_preproc_signal, 'file') || I.overwrite
     
     % save to mat file
     save(MAT_file_with_preproc_signal, ...
-        'signal', 'good_channels', 'noise60Hz_rms', 'sr', 'r');
+        'signal', 'good_channels', 'noise60Hz_rms', 'sr', 'r', '-v7.3');
     
 end
 

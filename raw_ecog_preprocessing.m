@@ -132,9 +132,6 @@ for i = 1:n_steps
     end
 end
 
-close all;
-
-
 
 
 
