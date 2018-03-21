@@ -75,7 +75,7 @@ MAT_file = [output_directory '/'  sprintf('%s_', all_subjid{:}) ...
 
 % load MAT file and return if already created
 if exist(MAT_file, 'file') && ~I.overwrite
-    load(MAT_file, 'D', 'si', 'ei', 'n_runs');
+    load(MAT_file, 'D', 'si', 'ei', 'n_runs', 'stim_names');
     return;
 end
 
@@ -124,7 +124,7 @@ D_cell = cell(1, n_subjects);
 electrode_indices = cell(1, n_subjects);
 n_runs = nan(1, n_subjects);
 n_electrodes = nan(1, n_subjects);
-for i = 1:1%n_subjects
+for i = 1:n_subjects
     
     [D_cell{i}, t, stim_names] = load_envelopes(exp, all_subjid{i}, ...
         preprocessing_analysis_name, freq_cutoffs, I.preproc_resp_win);
@@ -175,7 +175,7 @@ D = resample_and_window(D, I.preproc_resp_win, env_sr, I.time_win, I.analysis_sr
 
 %% Save results
 
-save(MAT_file, 'D', 'ei', 'si', 'n_runs', '-v7.3');
+save(MAT_file, 'D', 'ei', 'si', 'n_runs', 'stim_names', '-v7.3');
 fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 
 %% Compute the variance for each electrode
