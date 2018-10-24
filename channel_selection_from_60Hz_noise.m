@@ -22,9 +22,12 @@ function [good_channels, rms60Hz] = ...
 
 n_channels = size(signal,2);
 
+noNaN_channels = all(~isnan(signal));
+signal_noNaN = signal(:, noNaN_channels);
+
 % measure 60 Hz power in rms units
 [b,a] = iirpeak(60/(sr/2), P.bw_60Hz_peak_filt/(sr/2));
-rms60Hz = mean(sqrt(filter(b, a, signal).^2),1);
+rms60Hz = mean(sqrt(filter(b, a, signal_noNaN).^2),1);
 
 % infer mode
 % [N,bin_centers] = hist(noise60Hz_rms, 1000);
@@ -33,6 +36,7 @@ rms60Hz = mean(sqrt(filter(b, a, signal).^2),1);
 
 % zsore using samples nearest the median
 rms60Hz_zcore = zscore_using_central_samples(rms60Hz, P.min_fraction_of_good_electrodes);
+rms60Hz_zcore = fillin_NaN(rms60Hz_zcore, noNaN_channels, 2);
 
 % select good channels
 good_channels = find(abs(rms60Hz_zcore) < P.electrode_outlier_threshold);
