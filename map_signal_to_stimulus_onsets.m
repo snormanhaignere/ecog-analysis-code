@@ -3,32 +3,32 @@ function signal_mapped_by_stim = map_signal_to_stimulus_onsets(...
 
 % function [signal_mapped_by_stim, t] = map_signal_to_stimulus_onsets(...
 %     signal, sr, stim_onsets, response_window)
-% 
+%
 % Subdivides a signal vector so that the responses are locked to the onset
 % of a stimulus / task.
-% 
+%
 % -- Inputs --
-% 
+%
 % signal: [signal x electrode] matrix of envelopes
-% 
+%
 % sr: signal sampling rate
-% 
+%
 % stim_names: cell array with the name for each stimulus presented in the
 % experiment
-% 
+%
 % S: structure containing the time stamp of each stimulus onset
 % (S.ons_in_sec), the duration (S.dur_in_sec), and the
 % corresponding stimulus name (S.name); the duration is not used
-% 
+%
 % response_window: range of times relative to stimulus onset to extract
-% 
-% -- Outputs -- 
-% 
+%
+% -- Outputs --
+%
 % signal_mapped_by_stim: [samples/time x stim x repetition x electrode] matrix of signal
 % values
-% 
+%
 % 2016-1-26: Created by Sam NH
-% 
+%
 % 2016-08-19 - Elaborated so that stimuli with the same name are grouped
 % together, Sam NH
 
@@ -65,9 +65,13 @@ n_stimuli = length(stim_names);
 stim_index_for_each_onset = nan(1, n_onsets);
 n_reps_per_stim = zeros(1, n_stimuli);
 for i = 1:n_onsets
-    stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
-    n_reps_per_stim(stim_index_for_each_onset(i)) = ...
-        n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
+    try
+        stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
+        n_reps_per_stim(stim_index_for_each_onset(i)) = ...
+            n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
+    catch
+        keyboard
+    end
 end
 assert(all(~isnan(stim_index_for_each_onset)));
 

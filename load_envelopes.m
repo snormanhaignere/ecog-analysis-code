@@ -22,8 +22,15 @@ I.runs = [];
 % whether or not to average stimulus repetitions within runs
 I.average_reps = true;
 
+% debug mode
+I.keyboard = false;
+
 % optionally overwrite defaults
 I = parse_optInputs_keyvalue(varargin, I);
+
+if I.keyboard
+    keyboard;
+end
 
 %% Misc setup
 

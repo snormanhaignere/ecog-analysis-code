@@ -34,6 +34,8 @@ function [ons_in_sec, dur_in_sec, stim_names, stim_ids] ...
 % the names from the analysis/stim_names.mat, in which case the order of the
 % stimuli in the MAT file should match the indices.
 
+global root_directory;
+
 I.stim_names_from_bci = true;
 I.exp = '';
 I = parse_optInputs_keyvalue(varargin, I);

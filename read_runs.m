@@ -12,9 +12,9 @@ project_directory = [root_directory '/' exp];
 data_directory = [project_directory '/data/ECoG/' subjid '/'];
 
 % parse run numbers from files in data directory
-files_in_data_directory = mydir(data_directory, '.dat');
+files_in_data_directory = mydir(data_directory, '.dat', '_aux');
 if isempty(files_in_data_directory)
-    files_in_data_directory = mydir(data_directory, '.mat');
+    files_in_data_directory = mydir(data_directory, '.mat', '_aux');
 end
 runs = [];
 for i = 1:length(files_in_data_directory)
