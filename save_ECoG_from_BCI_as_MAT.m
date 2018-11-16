@@ -15,7 +15,7 @@ I.skip_audio_trigger = false;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % debug mode
-if I.keyboard;
+if I.keyboard
     keyboard;
 end
 
@@ -27,13 +27,13 @@ data_directory = [project_directory '/data/ECoG/' subjid];
 
 % directory to save results to
 analysis_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r)];
-if ~exist(analysis_directory, 'dir');
+if ~exist(analysis_directory, 'dir')
     mkdir(analysis_directory);
 end
 
 % directory to save figures to
 figure_directory = strrep(analysis_directory,'analysis','figures');
-if ~exist(figure_directory, 'dir');
+if ~exist(figure_directory, 'dir')
     mkdir(figure_directory);
 end
 
@@ -45,15 +45,8 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % convert to double precision
     bci_run_file = [data_directory '/r' num2str(r) '.dat'];
     fprintf('Loading signal...\n'); drawnow;
-    try
-        %         [ signal, states, parameters, total_samples, file_samples ] ...
-        %             = load_bcidat(bci_run_file); %#ok<ASGLU>
-        [ signal, states, parameters, total_samples ] ...
-            = load_bcidat(bci_run_file); %#ok<ASGLU>
-    catch
-        keyboard;
-    end
-        
+    [signal, states, parameters, total_samples] = load_bcidat(bci_run_file);
+    
     % convert to double
     signal = double(signal);
     
@@ -63,15 +56,15 @@ if ~exist(MAT_file, 'file') || I.overwrite
     end
     
     % save sampling rate as separate variable
-    sr = parameters.SamplingRate.NumericValue; %#ok<NASGU>
+    sr = parameters.SamplingRate.NumericValue;
     
     % separate out and save audio trigger
     if ~I.skip_audio_trigger
         load([data_directory '/electrode_types.mat'], 'audio_trigger');
         if isnumeric(audio_trigger)
-            audio_trigger_signal = signal(:,audio_trigger); %#ok<NASGU>
+            audio_trigger_signal = signal(:,audio_trigger);
         elseif ischar(audio_trigger)
-            audio_trigger_signal = states.(audio_trigger); %#ok<NASGU>
+            audio_trigger_signal = states.(audio_trigger);
         else
             error('Conditional fell through');
         end
@@ -81,7 +74,7 @@ if ~exist(MAT_file, 'file') || I.overwrite
     
     % select ECoG electrodes
     load([data_directory '/electrode_types.mat'], 'ecog');
-    electrode_research_numbers = ecog; %#ok<NASGU>
+    electrode_research_numbers = ecog;
     signal = signal(:,ecog);    
 
     % save as MAT file
