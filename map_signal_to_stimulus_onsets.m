@@ -65,15 +65,17 @@ n_stimuli = length(stim_names);
 stim_index_for_each_onset = nan(1, n_onsets);
 n_reps_per_stim = zeros(1, n_stimuli);
 for i = 1:n_onsets
-    try
-        stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
-        n_reps_per_stim(stim_index_for_each_onset(i)) = ...
-            n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
-    catch
-        keyboard
+    if any(strcmp(S.names{i}, stim_names))
+        try
+            stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
+            n_reps_per_stim(stim_index_for_each_onset(i)) = ...
+                n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
+        catch
+            keyboard
+        end
     end
 end
-assert(all(~isnan(stim_index_for_each_onset)));
+% assert(all(~isnan(stim_index_for_each_onset)));
 
 % create the final matrix
 % -> sample x stim x rep x electrode
@@ -81,7 +83,9 @@ n_electrodes = size(signal,2);
 signal_mapped_by_stim = nan(n_t, n_stimuli, max(n_reps_per_stim), n_electrodes);
 rep = zeros(1, n_stimuli);
 for i = 1:n_onsets
-    rep(stim_index_for_each_onset(i)) = rep(stim_index_for_each_onset(i))+1;
-    signal_mapped_by_stim(:, stim_index_for_each_onset(i), rep(stim_index_for_each_onset(i)), :) ...
-        = signal_mapped_by_onset(:,i,:);
+    if any(strcmp(S.names{i}, stim_names))
+        rep(stim_index_for_each_onset(i)) = rep(stim_index_for_each_onset(i))+1;
+        signal_mapped_by_stim(:, stim_index_for_each_onset(i), rep(stim_index_for_each_onset(i)), :) ...
+            = signal_mapped_by_onset(:,i,:);
+    end
 end
