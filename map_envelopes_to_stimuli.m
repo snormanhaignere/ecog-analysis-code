@@ -7,6 +7,8 @@ function MAT_file_with_envelopes_mapped_to_stim = ...
 % 2016-08-19: Created, Sam NH
 %
 % 2016-09-23: Minor Changes, Sam NH
+% 
+% 2018-11-19: Made it possible to have variable duration stimuli
 
 I.overwrite = false;
 I.remove_1backs = false;
@@ -34,12 +36,12 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
     
     % load the envelopes
     load(envelope_MAT_file, 'envelopes', 'outliers', 'env_sr');
-        
+    
     % information about the onset of stimuli in each run
     % NULL periods are removed
     para_file = [root_directory '/' exp '/data/para/' subjid '/r' num2str(r) '.par'];
     t = stim_timing_from_para(para_file, 'remove-NULL');
-           
+    
     % can optionally remove back to back presentations of the same stimulus
     if I.remove_1backs
         rep1back = false(1,length(t.names));
@@ -53,13 +55,28 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
         clear rep1back;
     end
     
-    % map the enevelopes to the stimuli
-    envelopes_mapped_to_stim = map_signal_to_stimulus_onsets(...
-        envelopes, env_sr, stim_names, t, resp_win); %#ok<NASGU>
-    
-    % map the outliers to the stimuli
-    outliers_mapped_to_stim = map_signal_to_stimulus_onsets(...
-        double(outliers), env_sr, stim_names, t, resp_win); %#ok<NASGU>
+    % map to onsets 
+    if max(abs(t.dur_in_sec-t.dur_in_sec(1))) > 1e-2 % variable duration
+        
+        % map the enevelopes to the stimuli
+        envelopes_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
+            envelopes, env_sr, stim_names, t, resp_win);
+        
+        % map the outliers to the stimuli
+        outliers_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
+            double(outliers), env_sr, stim_names, t, resp_win);
+        
+    else % fixed duration
+        
+        % map the enevelopes to the stimuli
+        envelopes_mapped_to_stim = map_signal_to_stimulus_onsets(...
+            envelopes, env_sr, stim_names, t, resp_win);
+        
+        % map the outliers to the stimuli
+        outliers_mapped_to_stim = map_signal_to_stimulus_onsets(...
+            double(outliers), env_sr, stim_names, t, resp_win);
+        
+    end
     
     % save results
     save(MAT_file_with_envelopes_mapped_to_stim, ...
