@@ -39,6 +39,7 @@ n_channels = size(signal,2);
 I.steps = {'60Hz', 'highpass', 'car', 'notch'};
 I.electrode_numbers = 1:n_channels;
 I.plot_all_electrodes = false;
+I.exclude_from_car = [];
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory to save figures with timecourses for individual electrodes
@@ -97,7 +98,7 @@ for i = 1:n_steps
         case 'car'
             
             fprintf('Subtracting the average timecourse of good channels...\n');
-            common_average = mean(signal(:,good_channels),2);
+            common_average = mean(signal(:,setdiff(good_channels, I.exclude_from_car)),2);
             signal = signal - common_average * ones(1,n_channels);
             
         case 'notch'

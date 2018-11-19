@@ -16,6 +16,8 @@ function MAT_file_with_preproc_signal = ...
 global root_directory;
 
 I.overwrite = false;
+I.exclude_from_car = [];
+I.steps = {'60Hz', 'highpass', 'car', 'notch'};
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory for this project
@@ -23,13 +25,13 @@ project_directory = [root_directory '/' exp];
 
 % directory to save results to
 analysis_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r)];
-if ~exist(analysis_directory, 'dir');
+if ~exist(analysis_directory, 'dir')
     mkdir(analysis_directory);
 end
 
 % directory to save figures to
 figure_directory = strrep(analysis_directory,'analysis','figures');
-if ~exist(figure_directory, 'dir');
+if ~exist(figure_directory, 'dir')
     mkdir(figure_directory);
 end
 
@@ -43,14 +45,16 @@ if ~exist(MAT_file_with_preproc_signal, 'file') || I.overwrite
     load([analysis_directory '/raw.mat'], ...
         'signal', 'sr', 'electrode_research_numbers');
     
-    % preprocess the data
+    % preprocess the data    
     [signal, good_channels, noise60Hz_rms] = ...
         raw_ecog_preprocessing(signal, sr, P, figure_directory,...
-        'electrode_numbers', electrode_research_numbers); %#ok<NODEF,ASGLU>
+        'electrode_numbers', electrode_research_numbers, ...
+        'exclude_from_car', I.exclude_from_car, ...
+        'steps', I.steps);
     
     % save to mat file
     save(MAT_file_with_preproc_signal, ...
-        'signal', 'good_channels', 'noise60Hz_rms', 'sr', 'r', '-v7.3');
+        'signal', 'electrode_research_numbers', 'good_channels', 'noise60Hz_rms', 'sr', 'r', '-v7.3');
     
 end
 
