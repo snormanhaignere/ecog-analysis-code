@@ -28,7 +28,7 @@ end
 % xlim([0 1])
 
 % apply notch filter
-for i = 1:n_channels,
+for i = 1:n_channels
     for j = 1:length(P.notch_freqs)
         signal(:,i) = filtfilt(...
             b{j},a{j},signal(:,i));
