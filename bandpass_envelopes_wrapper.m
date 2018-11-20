@@ -27,13 +27,13 @@ project_directory = [root_directory '/' exp];
 
 % directory to save results to
 analysis_directory = [project_directory '/analysis/envelopes/' subjid '/r' num2str(r)];
-if ~exist(analysis_directory, 'dir');
+if ~exist(analysis_directory, 'dir')
     mkdir(analysis_directory);
 end
 
 % directory to save figures to
 figure_directory = strrep(analysis_directory, 'analysis', 'figures');
-if ~exist(figure_directory, 'dir');
+if ~exist(figure_directory, 'dir')
     mkdir(figure_directory);
 end
 
