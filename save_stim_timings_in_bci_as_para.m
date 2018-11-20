@@ -6,14 +6,18 @@ function para_file = save_stim_timings_in_bci_as_para(exp, subjid, r, varargin)
 % information as a paradigm file.
 
 % 2016-08-19 - Created Sam NH
-% 
+%
 % 2018-03-02: Modified to make it optional as to whether the stimulus names are
 % read from the parameter structure in the BCI file. The alternative is to read
 % the names from the analysis/stim_names.mat, in which case the order of the
 % stimuli in the MAT file should match the indices.
-% 
+%
 % 2018-03-21: Modified so that one can add both constant and stimulus-specific
 % delays to the onset of each stimulus
+% 
+% 2018-11-20: Previously the stim_id in the para file could potentially
+% change. To fix this the index is now tied to the index of each stimulus
+% name in the stim_names.mat file (or the corresponding delay file).
 
 global root_directory
 
@@ -50,13 +54,17 @@ if ~exist(para_file, 'file') || I.overwrite
         load_bcidat([data_directory '/r' num2str(r) '.dat']);
     
     % determine onsets and durations from bci file
-    [ons_in_sec, dur_in_sec, stim_name_for_each_onset, stim_ids] = ...
+    [ons_in_sec, dur_in_sec, stim_name_for_each_onset] = ...
         stim_onsets_from_bci(bci.states, bci.parameters, ...
         'stim_names_from_bci', I.stim_names_from_bci, 'exp', exp);
     
     % load stimulus specific onsets
     if I.stim_spec_delays
         load([project_directory '/analysis/stim_delays.mat'], 'delays', 'stim_names');
+        X = load([root_directory '/' exp '/analysis/stim_names.mat'],'stim_names');
+        assert(isequal(X.stim_names, stim_names));
+    else
+        load([root_directory '/' exp '/analysis/stim_names.mat'],'stim_names');
     end
     
     % write to para file
@@ -64,19 +72,20 @@ if ~exist(para_file, 'file') || I.overwrite
     n_onsets = length(ons_in_sec);
     for i = 1:n_onsets
         
+        stim_index = find(ismember(stim_names, I.fn_to_stim_name(stim_name_for_each_onset{i})));
+        assert(length(stim_index)==1);
+        
         % stimulus specific delay
         if ~strcmp(I.fn_to_stim_name(stim_name_for_each_onset{i}), 'NULL') && I.stim_spec_delays
-            xi = ismember(stim_names, I.fn_to_stim_name(stim_name_for_each_onset{i}));
-            assert(sum(xi)==1);
-            stim_spec_delay = delays(xi);
+            stim_spec_delay = delays(stim_index);
         else
             stim_spec_delay = 0;
         end
-        
+                
         % write to file
         fprintf(fid,'%10.6f%5d%10.6f%5d%50s\n', ...
             ons_in_sec(i) + I.constant_delay + stim_spec_delay, ...
-            stim_ids(i), dur_in_sec(i), NaN, ...
+            stim_index, dur_in_sec(i), NaN, ...
             I.fn_to_stim_name(stim_name_for_each_onset{i}));
         
     end
