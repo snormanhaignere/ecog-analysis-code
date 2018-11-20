@@ -71,7 +71,7 @@ for i = 1:n_onsets
         
         % initialize
         if rep(stim_index_for_each_onset(i)) == 1
-            signal_mapped_by_stim{i} = nan(length(signal_mapped_by_onset), ...
+            signal_mapped_by_stim{stim_index_for_each_onset(i)} = nan(length(signal_mapped_by_onset), ...
                 n_reps_per_stim(stim_index_for_each_onset(i)), n_electrodes);
         end
         
