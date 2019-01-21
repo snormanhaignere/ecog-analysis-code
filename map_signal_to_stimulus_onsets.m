@@ -26,7 +26,7 @@ function signal_mapped_by_stim = map_signal_to_stimulus_onsets(...
 %
 % signal_mapped_by_stim: [samples/time x stim x repetition x electrode] matrix of signal
 % values
-%
+%x
 % 2016-1-26: Created by Sam NH
 %
 % 2016-08-19 - Elaborated so that stimuli with the same name are grouped
@@ -55,7 +55,7 @@ signal_mapped_by_onset = ...
 
 % reshape so as to separate out different stimuli
 % -> sample x stim onset x electrode
-n_electrodes = size(signal,2);
+n_electrodes = size(signal,2); 
 signal_mapped_by_onset = reshape(signal_mapped_by_onset, ...
     [n_t, n_onsets, n_electrodes]);
 
@@ -66,13 +66,9 @@ stim_index_for_each_onset = nan(1, n_onsets);
 n_reps_per_stim = zeros(1, n_stimuli);
 for i = 1:n_onsets
     if any(strcmp(S.names{i}, stim_names))
-        try
-            stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
-            n_reps_per_stim(stim_index_for_each_onset(i)) = ...
-                n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
-        catch
-            keyboard
-        end
+        stim_index_for_each_onset(i) = find(strcmp(S.names{i}, stim_names));
+        n_reps_per_stim(stim_index_for_each_onset(i)) = ...
+            n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
     end
 end
 % assert(all(~isnan(stim_index_for_each_onset)));

@@ -43,7 +43,7 @@ I = parse_optInputs_keyvalue(varargin, I);
 % end
 
 % Construct an FDESIGN object and call its BUTTER method.
-h  = fdesign.bandpass('N,F3dB1,F3dB2', filter_order, ...
+h = fdesign.bandpass('N,F3dB1,F3dB2', filter_order, ...
     band_in_Hz(1), band_in_Hz(2), signal_sr);
 Hd = design(h,'butter');
 [B, A] = sos2tf(Hd.sosMatrix,Hd.scaleValues);
@@ -55,7 +55,7 @@ subb = filtfilt(B,A,signal);
 % measure envelope
 fprintf('Calculating envelopes...\n');
 env = abs(hilbert(subb));
-    
+
 % resample to desired rate
 fprintf('Downsampling...\n');
 env = resample(env, env_sr, signal_sr);

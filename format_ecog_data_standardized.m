@@ -1,4 +1,5 @@
-function [D, si, ei, stim_names, n_runs, MAT_file] = format_ecog_data_standardized(exp, all_subjid, varargin)
+function [D, si, ei, stim_names, n_runs, MAT_file] = format_ecog_data_standardized(...
+    exp, all_subjid, preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, varargin)
 
 % Formats data from all subjects into a matrix used by other programs
 %
@@ -18,24 +19,25 @@ addpath([root_directory '/general-analysis-code']);
 addpath([root_directory '/export_fig_v2']);
 
 % experiment name and all subject IDs
-% exp = 'naturalsound-ecog';
-% all_subjid = {'AMC045', 'AMC047', 'AMC056', 'AMC062', 'AMC071', 'AMC078', 'AMC079', 'AMC081'};
 n_subjects = length(all_subjid);
 
 % preprocessing parameters
-I.preproc_resp_win = [-1 3];
-preprocessing_analysis_name = 'standard_preproc_params';
-freq_cutoffs = [70 140]';
-env_sr = 100;
-
-% reliability threshold used to select data
-I.reliability_threshold = NaN;
+% preproc_resp_win = [-1 3];
+% preprocessing_analysis_name = 'standard_preproc_params';
+% freq_cutoffs = [70 140]';
+I.preproc_sr = 100;
 
 % final sampling rate
-I.analysis_sr = 100;
+I.sr = 100;
+
+% reliability threshold used to select data
+I.relthresh = NaN;
 
 % output time window
 I.time_win = [];
+
+% baseline period used to calculate PSC values
+I.basewin = 0.5;
 
 % whether or not to average across runs
 I.average_runs = false;
@@ -46,12 +48,12 @@ I.overwrite = false;
 % whether or not to enter debug keyboard mode
 I.keyboard = false;
 
-I = parse_optInputs_keyvalue(varargin, I);
+[I, ~, C_value] = parse_optInputs_keyvalue(varargin, I);
 
 % default timewindow if not specified is set based on the preprocessing
 % time window
 if isempty(I.time_win)
-    I.time_win = [0, I.preproc_resp_win(2) - 1/I.analysis_sr];
+    I.time_win = [0, preproc_resp_win(2) - 1/I.sr];
 end
 
 % enter debug mode
@@ -62,16 +64,18 @@ end
 preproc_idstring = [...
     preprocessing_analysis_name '_' ...
     num2str(freq_cutoffs(1)) '-' num2str(freq_cutoffs(2)) 'Hz' ...
-    '_prewin' num2str(I.preproc_resp_win(1)) 'to' num2str(I.preproc_resp_win(2))];
+    '_prewin' num2str(preproc_resp_win(1)) 'to' num2str(preproc_resp_win(2))];
 
 % file to save results to
 output_directory = [root_directory '/' exp '/analysis/formatted-data'];
 if ~exist(output_directory, 'dir'); mkdir(output_directory); end
 MAT_file = [output_directory '/'  sprintf('%s_', all_subjid{:}) ...
-    preproc_idstring '_reliability' num2str(I.reliability_threshold) ...
-    '_' num2str(I.analysis_sr) 'Hz' ...
+    preproc_idstring '_' struct2string(C_value)
+    
+    '_reliability' num2str(I.relthresh) ...
+    '_' num2str(I.sr) 'Hz' ...
     '_finalwin' num2str(I.time_win(1)) 'to' num2str(I.time_win(2)) ...
-    '_avruns' num2str(I.average_runs) '_newsubjorder.mat'];
+    '_avruns' num2str(I.average_runs) '.mat'];
 
 % load MAT file and return if already created
 if exist(MAT_file, 'file') && ~I.overwrite
@@ -81,7 +85,7 @@ end
 
 %% Reliability information
 
-if ~isnan(I.reliability_threshold)
+if ~isnan(I.relthresh)
     
     reliable_electrodes = cell(1,n_subjects);
     n_reliable_electrodes = nan(1,n_subjects);
@@ -90,11 +94,11 @@ if ~isnan(I.reliability_threshold)
         
         % load test-retest correlation
         reliability_MAT_file = electrode_envelope_reliability_across_runs(exp, all_subjid{i}, ...
-            preprocessing_analysis_name, freq_cutoffs, I.preproc_resp_win, 'win', [0 3], 'plot', false);
+            preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, 'win', I.time_win, 'plot', false);
         load(reliability_MAT_file,'reliability_corr');
         
-        reliable_electrodes{i} = find(reliability_corr > I.reliability_threshold);
-        rel_corr{i} = reliability_corr(reliability_corr > I.reliability_threshold);
+        reliable_electrodes{i} = find(reliability_corr > I.relthresh);
+        rel_corr{i} = reliability_corr(reliability_corr > I.relthresh);
         
         % remove errant electrode
         if strcmp(all_subjid{i}, 'AMC071')
@@ -114,7 +118,6 @@ if ~isnan(I.reliability_threshold)
         n_reliable_electrodes(i) = length(reliable_electrodes{i});
         
     end
-    
 end
 
 %% Envelope data
@@ -126,16 +129,18 @@ n_runs = nan(1, n_subjects);
 n_electrodes = nan(1, n_subjects);
 for i = 1:n_subjects
     
-    [D_cell{i}, t, stim_names] = load_envelopes(exp, all_subjid{i}, ...
-        preprocessing_analysis_name, freq_cutoffs, I.preproc_resp_win);
-    assert(abs(1/(t(2)-t(1)) - env_sr)<1e-10);
+    [D_cell{i}, t, stim_names, electrode_research_numbers] = ...
+        load_envelopes(exp, all_subjid{i}, ...
+        preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, ...
+        'baseline_period', I.baseline_period);
+    assert(abs(1/(t(2)-t(1)) - I.preproc_sr)<1e-10);
     
     % select reliable electrodes
-    if ~isnan(I.reliability_threshold)
+    if ~isnan(I.relthresh)
         D_cell{i} = D_cell{i}(:,:,:,reliable_electrodes{i});
-        electrode_indices{i} = reliable_electrodes{i};
+        electrode_indices{i} = electrode_research_numbers(reliable_electrodes{i});
     else
-        electrode_indices{i} = 1:size(D_cell{i},4);
+        electrode_indices{i} = electrode_research_numbers;
     end
     
     % dimensions
@@ -154,7 +159,8 @@ end
 si = nan(1, sum(n_electrodes));
 ei = nan(1, sum(n_electrodes));
 
-% average runs and unwrap
+% unwrap across subjects while storing electrode and subject indices
+% optioanlly average across runs
 for i = 1:n_subjects
     xi = (1:n_electrodes(i)) + sum(n_electrodes(1:i-1));
     if I.average_runs
@@ -171,7 +177,7 @@ end
 D = interpNaN_ndarray(1:n_smps_per_stim, D, 'pchip');
 
 % resample to desired window and sample rate
-D = resample_and_window(D, I.preproc_resp_win, env_sr, I.time_win, I.analysis_sr);
+D = resample_and_window(D, preproc_resp_win, I.preproc_sr, I.time_win, I.sr);
 
 %% Save results
 
@@ -225,7 +231,7 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % D = interpNaN_ndarray(1:n_smps_per_stim, D, 'pchip');
 % 
 % % resample to desired window and sample rate
-% D = resample_and_window(D, I.preproc_resp_win, env_sr, [0 2.96], 25);
+% D = resample_and_window(D, preproc_resp_win, I.preproc_sr, [0 2.96], 25);
 % 
 % delete([root_directory '/naturalsound-ecog/analysis/formatted-data/reliability0.1.mat']);
 % save([root_directory '/naturalsound-ecog/analysis/formatted-data/reliability0.1.mat'], 'D', 'si', 'electrode_std', '-v7.3');
@@ -244,7 +250,7 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % for i = 1:n_subjects
 %     
 %     [D_cell{i},t] = load_envelopes(exp, all_subjid{i}, ...
-%         preprocessing_analysis_name, freq_cutoffs, I.preproc_resp_win);
+%         preprocessing_analysis_name, freq_cutoffs, preproc_resp_win);
 %     
 %     % dimensions
 %     [n_smps_per_stim, n_stimuli, n_runs(i), n_electrodes(i)] = size(D_cell{i});
@@ -265,7 +271,7 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % D = interpNaN_ndarray(1:n_smps_per_stim, D, 'pchip');
 % 
 % % resample to desired window and sample rate
-% % Y = resample_and_window(X, I.preproc_resp_win, 100, [0 2.99], 100);
+% % Y = resample_and_window(X, preproc_resp_win, 100, [0 2.99], 100);
 % 
 % D = D(101:400,:,:,:);
 % 
@@ -286,7 +292,7 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % D1 = interpNaN_ndarray(1:n_smps_per_stim, D1, 'pchip');
 % 
 % % resample to desired window and sample rate
-% D1 = resample_and_window(D1, I.preproc_resp_win, 100, [0 2.96], 25);
+% D1 = resample_and_window(D1, preproc_resp_win, 100, [0 2.96], 25);
 % 
 % % average runs and unwrap
 % D2 = [];
@@ -299,7 +305,7 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % D2 = interpNaN_ndarray(1:n_smps_per_stim, D2, 'pchip');
 % 
 % % resample to desired window and sample rate
-% D2 = resample_and_window(D2, I.preproc_resp_win, 100, [0 2.96], 25);
+% D2 = resample_and_window(D2, preproc_resp_win, 100, [0 2.96], 25);
 % 
 % delete([root_directory '/naturalsound-ecog/analysis/formatted-data/reliability0.1-splits.mat']);
 % save([root_directory '/naturalsound-ecog/analysis/formatted-data/reliability0.1-splits.mat'], 'D1', 'D2', '-v7.3');

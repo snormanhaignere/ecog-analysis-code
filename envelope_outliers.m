@@ -1,16 +1,18 @@
 function [outliers, multiscale_outliers] ...
     = envelope_outliers(envelopes, env_sr, figure_directory, varargin)
 
-% Detects outliers in signal envelopes. The difference between the median and
-% the 84th percential of the envelope distribution for each electrode is
-% measured. For a Gaussian distribution this interval is equal to a standard
-% deviation. Envelopes are considered outliers if they fall a certain number of
-% 'standard deviations' above the median. 
+% Detects outliers in signal envelopes. The difference between the median
+% and the Qth percentile (default: 90%) of the envelope distribution for
+% each electrode is measured. Envelopes are considered outliers if they
+% fall a certain number of units above this value.
 % 
 % 2016-08-15 - Created, Sam NH
+% 
+% 2019-01-21 - Cosmetic changes, Sam NH
 
 I.scales = [0 0.25 1 4];
 I.thresholds = [5 2.5 2 1.5];
+I.percentile = 0.9;
 I.plot_mosaic = true;
 I.plot_individ_electrodes = false;
 I = parse_optInputs_keyvalue(varargin, I);
@@ -19,12 +21,13 @@ I = parse_optInputs_keyvalue(varargin, I);
 n_channels = size(envelopes,2);
 
 % make scale/threshold parameters electrode specific if not already
-if isvector(I.scales);
+% -> scale x channel/electrode
+if isvector(I.scales)
     I.scales = repmat(I.scales(:), 1, n_channels);
 else
     assert(size(I.scales) == n_channels);
 end
-if isvector(I.thresholds);
+if isvector(I.thresholds)
     I.thresholds = repmat(I.thresholds(:), 1, n_channels);
 else
     assert(size(I.thresholds) == n_channels);
@@ -33,7 +36,7 @@ assert(all(size(I.thresholds)==size(I.scales)));
 n_scales = size(I.scales,1);
 
 % normalize by 90% of the distribution
-s = quantile(envelopes,0.9);
+s = quantile(envelopes, I.percentile);
 Z = envelopes ./ repmat(s, size(envelopes,1),1);
 clear sd;
 
@@ -42,7 +45,7 @@ t = (0:size(envelopes,1)-1)/env_sr;
 
 if I.plot_individ_electrodes
     individual_electrode_directory = [figure_directory '/individual-electrodes'];
-    if ~exist(individual_electrode_directory, 'dir');
+    if ~exist(individual_electrode_directory, 'dir')
         mkdir(individual_electrode_directory);
     end
 end
@@ -133,7 +136,7 @@ end
 
 % pdf with sets of electrodes for ease of viewing
 if I.plot_individ_electrodes
-    for i = 1:ceil(n_channels/20);
+    for i = 1:ceil(n_channels/20)
         xi = (1:20) + (i-1)*20;
         xi = intersect(xi, 1:size(envelopes,2));
         append_pdfs([figure_directory '/mosaic-electrodes' num2str(xi(1)) '-' num2str(xi(end)) '.pdf'], fig_pdfs{xi});

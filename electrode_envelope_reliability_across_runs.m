@@ -7,6 +7,8 @@ function MAT_file = electrode_envelope_reliability_across_runs(exp, subjid, ...
 % 2016-1-31: Created by Sam NH
 %
 % 2016-10-22: Integrated with preprocessing scripts, made a bit more general
+% 
+% 2019-01-21: Very minor changes, Sam NH
 
 %% Parameters
 
@@ -115,7 +117,7 @@ if ~exist(MAT_file, 'file') || I.overwrite
     end
     
     % optionally select subset of the response window
-    if ~isequal(resp_win, I.win);
+    if ~isequal(resp_win, I.win)
         xi = t >= I.win(1) & t <=I.win(2);
         D = D(xi,:,:,:);
         n_smps = size(D,1);

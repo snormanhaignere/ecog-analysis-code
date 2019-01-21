@@ -1,5 +1,6 @@
 function MAT_file_with_envelopes_mapped_to_stim = ...
-    map_envelopes_to_stimuli(exp, subjid, r, envelope_MAT_file, resp_win, varargin)
+    map_envelopes_to_stimuli(exp, subjid, r, envelope_MAT_file, resp_win, ...
+    fixed_duration, varargin)
 
 % Maps a vector of envelope values to the onset of stimuli. Essentially a
 % wrapper for map_signal_to_stimulus_onsets.m.
@@ -9,6 +10,9 @@ function MAT_file_with_envelopes_mapped_to_stim = ...
 % 2016-09-23: Minor Changes, Sam NH
 % 
 % 2018-11-19: Made it possible to have variable duration stimuli
+% 
+% 2019-01-21: Made fixed/variable duration a parameter that must be
+% specified
 
 I.overwrite = false;
 I.remove_1backs = false;
@@ -35,7 +39,8 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
     load([root_directory '/' exp '/analysis/stim_names.mat'],'stim_names');
     
     % load the envelopes
-    load(envelope_MAT_file, 'envelopes', 'outliers', 'env_sr');
+    load(envelope_MAT_file, 'envelopes', 'outliers', 'env_sr', ...
+        'good_channels', 'electrode_research_numbers');
     
     % information about the onset of stimuli in each run
     % NULL periods are removed
@@ -56,17 +61,9 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
     end
     
     % map to onsets 
-    if max(abs(t.dur_in_sec-t.dur_in_sec(1))) > 1e-2 % variable duration
+    if fixed_duration
         
-        % map the enevelopes to the stimuli
-        envelopes_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
-            envelopes, env_sr, stim_names, t, resp_win);
-        
-        % map the outliers to the stimuli
-        outliers_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
-            double(outliers), env_sr, stim_names, t, resp_win);
-        
-    else % fixed duration
+        assert(max(abs(t.dur_in_sec-t.dur_in_sec(1))) < 1e-2)
         
         % map the enevelopes to the stimuli
         envelopes_mapped_to_stim = map_signal_to_stimulus_onsets(...
@@ -76,11 +73,24 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') ...
         outliers_mapped_to_stim = map_signal_to_stimulus_onsets(...
             double(outliers), env_sr, stim_names, t, resp_win);
         
+    else
+        
+        assert(max(abs(t.dur_in_sec-t.dur_in_sec(1))) > 1e-2)
+        
+        % map the enevelopes to the stimuli
+        envelopes_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
+            envelopes, env_sr, stim_names, t, resp_win);
+        
+        % map the outliers to the stimuli
+        outliers_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
+            double(outliers), env_sr, stim_names, t, resp_win);
+
     end
     
     % save results
     save(MAT_file_with_envelopes_mapped_to_stim, ...
         'envelopes_mapped_to_stim', 'outliers_mapped_to_stim',...
-        'env_sr', 'resp_win', 'stim_names', '-v7.3');
+        'env_sr', 'resp_win', 'stim_names', 'good_channels', ...
+        'electrode_research_numbers', '-v7.3');
     
 end

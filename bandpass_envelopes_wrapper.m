@@ -59,20 +59,21 @@ for i = 1:n_bands
         if ~signal_matrix_loaded
             signal_MAT_file = [project_directory '/analysis/preprocessing' ...
                 '/' subjid '/r' num2str(r) '/cleaned_signal_' analysis_name '.mat'];
-            load(signal_MAT_file, 'signal', 'sr', 'good_channels');
+            load(signal_MAT_file, 'signal', 'sr', 'good_channels', 'electrode_research_numbers');
         end
         
         % measure envelopes
         fprintf('Extracting envelopes for band %s...\n', bp_freq_range_string);
         envelopes = bandpass_envelopes(signal, sr, P.bandpass_env_sr, ...
             P.bandpass_cutoffs_in_Hz(:,i), P.bandpass_filter_orders(i),...
-            figure_directory); %#ok<*NASGU>
+            figure_directory, 'good_channels', good_channels, ...
+            'electrode_numbers', electrode_research_numbers); %#ok<*NASGU>
         
         % save to file
         env_sr = P.bandpass_env_sr;
         band_in_Hz = P.bandpass_cutoffs_in_Hz(:,i);
         save(MAT_file_with_envelopes{i}, 'envelopes', 'env_sr', 'band_in_Hz', ...
-            'good_channels', 'P', 'r', '-v7.3');
+            'good_channels', 'electrode_research_numbers', 'P', 'r', '-v7.3');
         
     end
     

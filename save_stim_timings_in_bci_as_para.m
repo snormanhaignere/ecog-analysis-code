@@ -72,8 +72,12 @@ if ~exist(para_file, 'file') || I.overwrite
     n_onsets = length(ons_in_sec);
     for i = 1:n_onsets
         
-        stim_index = find(ismember(stim_names, I.fn_to_stim_name(stim_name_for_each_onset{i})));
-        assert(length(stim_index)==1);
+        if ~strcmp(I.fn_to_stim_name(stim_name_for_each_onset{i}), 'NULL')
+            stim_index = find(ismember(stim_names, I.fn_to_stim_name(stim_name_for_each_onset{i})));
+            assert(length(stim_index)==1);
+        else
+            stim_index = 0;
+        end
         
         % stimulus specific delay
         if ~strcmp(I.fn_to_stim_name(stim_name_for_each_onset{i}), 'NULL') && I.stim_spec_delays

@@ -17,7 +17,7 @@ global root_directory;
 
 I.overwrite = false;
 I.exclude_from_car = [];
-I.steps = {'60Hz', 'highpass', 'car', 'notch'};
+I.steps = {'60Hz', 'highpass' 'car', 'notch'};
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory for this project
