@@ -74,7 +74,11 @@ if ~exist(para_file, 'file') || I.overwrite
         
         if ~strcmp(I.fn_to_stim_name(stim_name_for_each_onset{i}), 'NULL')
             stim_index = find(ismember(stim_names, I.fn_to_stim_name(stim_name_for_each_onset{i})));
-            assert(length(stim_index)==1);
+            if isempty(stim_index)
+                continue;
+            else
+                assert(length(stim_index)==1);
+            end
         else
             stim_index = 0;
         end

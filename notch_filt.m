@@ -1,4 +1,4 @@
-function signal = notch_filt(signal, P, sr)
+function signal = notch_filt(signal, sr, varargin)
 
 % Uses 60 Hz noise to detect good/bad channels
 % 
@@ -6,19 +6,23 @@ function signal = notch_filt(signal, P, sr)
 % 
 % signal: [time x electrode] singal matrix
 % 
-% P: parameters, see preprocessing_parameters.m
-% 
 % sr: sampling rate of the signal
 % 
-% 2016-08-12 - Created, Sam NH
+% 2016-08-12: Created, Sam NH
+% 
+% 2019-01-21: Altered parameter handling, Sam NH
+
+I.bw = 1;
+I.freqs = [60, 120, 160, 240];
+I = parse_optInputs_keyvalue(varargin, I);
 
 n_channels = size(signal,2);
 
 % notch filter parameters
-b = cell(1,length(P.notch_freqs)); 
-a = cell(1,length(P.notch_freqs));
-for i = 1:length(P.notch_freqs)
-    [b{i},a{i}] = iirnotch(P.notch_freqs(i) / (sr/2), P.notch_bw / (sr/2));
+b = cell(1,length(I.freqs)); 
+a = cell(1,length(I.freqs));
+for i = 1:length(I.freqs)
+    [b{i},a{i}] = iirnotch(I.freqs(i) / (sr/2), I.bw / (sr/2));
 end
 
 % fvtool(b{2}, a{2}, 'Fs', ecog_sr);
@@ -29,7 +33,7 @@ end
 
 % apply notch filter
 for i = 1:n_channels
-    for j = 1:length(P.notch_freqs)
+    for j = 1:length(I.freqs)
         signal(:,i) = filtfilt(...
             b{j},a{j},signal(:,i));
     end

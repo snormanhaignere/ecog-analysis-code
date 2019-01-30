@@ -1,5 +1,5 @@
-function [D, si, ei, stim_names, n_runs, MAT_file] = format_ecog_data_standardized(...
-    exp, all_subjid, preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, varargin)
+function [D, t, si, ei, stim_names, n_runs, relstat, MAT_file, param_idstring] = format_ecog_data_standardized(...
+    exp, all_subjid, preproc_idstring, varargin)
 
 % Formats data from all subjects into a matrix used by other programs
 %
@@ -7,6 +7,8 @@ function [D, si, ei, stim_names, n_runs, MAT_file] = format_ecog_data_standardiz
 %
 % Data from all subjects is combined, and subject indices for each electrode are
 % stored as a vector (si). The corresponding ids are stored in all_subjid.
+% 
+% 2019-01-21: Changed parameter handling, Sam NH
 
 %% Directories
 
@@ -21,65 +23,56 @@ addpath([root_directory '/export_fig_v2']);
 % experiment name and all subject IDs
 n_subjects = length(all_subjid);
 
-% preprocessing parameters
-% preproc_resp_win = [-1 3];
-% preprocessing_analysis_name = 'standard_preproc_params';
-% freq_cutoffs = [70 140]';
-I.preproc_sr = 100;
+% reliability threshold used to select data
+I.relstat = 'corr';
+I.relthresh = NaN;
+I.splithalf = true;
+I.spearbrown = false;
+I.permdur = 0.5;
 
 % final sampling rate
 I.sr = 100;
 
-% reliability threshold used to select data
-I.relthresh = NaN;
-
 % output time window
-I.time_win = [];
+I.win = [];
 
 % baseline period used to calculate PSC values
 I.basewin = 0.5;
 
 % whether or not to average across runs
-I.average_runs = false;
+I.avruns = false;
 
 % whether or not to overwrite an existing MAT file
 I.overwrite = false;
+
+% whether or not to interpolate NaN values
+I.interpNaNs = true;
 
 % whether or not to enter debug keyboard mode
 I.keyboard = false;
 
 [I, ~, C_value] = parse_optInputs_keyvalue(varargin, I);
 
-% default timewindow if not specified is set based on the preprocessing
-% time window
-if isempty(I.time_win)
-    I.time_win = [0, preproc_resp_win(2) - 1/I.sr];
-end
-
 % enter debug mode
 if I.keyboard
     keyboard;
 end
 
-preproc_idstring = [...
-    preprocessing_analysis_name '_' ...
-    num2str(freq_cutoffs(1)) '-' num2str(freq_cutoffs(2)) 'Hz' ...
-    '_prewin' num2str(preproc_resp_win(1)) 'to' num2str(preproc_resp_win(2))];
+% idstring to identify this analysis
+format_idstring = struct2string(C_value, 'omit_field', {'overwrite', 'keyboard'});
+if isempty(format_idstring); format_idstring = 'default-format'; end
+subj_string = sprintf('%s_', all_subjid{:}); subj_string = subj_string(1:end-1);
+param_idstring = [preproc_idstring '/' subj_string '/' format_idstring];
+clear subj_string;
 
 % file to save results to
-output_directory = [root_directory '/' exp '/analysis/formatted-data'];
+output_directory = [root_directory '/' exp '/analysis/formatted-data/' param_idstring];
 if ~exist(output_directory, 'dir'); mkdir(output_directory); end
-MAT_file = [output_directory '/'  sprintf('%s_', all_subjid{:}) ...
-    preproc_idstring '_' struct2string(C_value)
-    
-    '_reliability' num2str(I.relthresh) ...
-    '_' num2str(I.sr) 'Hz' ...
-    '_finalwin' num2str(I.time_win(1)) 'to' num2str(I.time_win(2)) ...
-    '_avruns' num2str(I.average_runs) '.mat'];
+MAT_file = [output_directory '/data.mat'];
 
 % load MAT file and return if already created
 if exist(MAT_file, 'file') && ~I.overwrite
-    load(MAT_file, 'D', 'si', 'ei', 'n_runs', 'stim_names');
+    load(MAT_file, 'D', 't', 'si', 'ei', 'n_runs', 'stim_names', 'relstat');
     return;
 end
 
@@ -89,28 +82,28 @@ if ~isnan(I.relthresh)
     
     reliable_electrodes = cell(1,n_subjects);
     n_reliable_electrodes = nan(1,n_subjects);
-    rel_corr = cell(1,n_subjects);
+    relstat_cell = cell(1,n_subjects);
     for i = 1:n_subjects
-        
+
         % load test-retest correlation
-        reliability_MAT_file = electrode_envelope_reliability_across_runs(exp, all_subjid{i}, ...
-            preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, 'win', I.time_win, 'plot', false);
-        load(reliability_MAT_file,'reliability_corr');
+        [~, R] = electrode_envelope_reliability_across_runs(....
+            exp, all_subjid{i}, preproc_idstring, 'win', I.win, 'plot', false, ...
+            'splithalf', I.splithalf, 'spearbrown', I.spearbrown, 'permdur', I.permdur);
         
-        reliable_electrodes{i} = find(reliability_corr > I.relthresh);
-        rel_corr{i} = reliability_corr(reliability_corr > I.relthresh);
+        reliable_electrodes{i} = find(R.(I.relstat) > I.relthresh);
+        relstat_cell{i} = I.relstat(R.(I.relstat) > I.relthresh);
         
         % remove errant electrode
         if strcmp(all_subjid{i}, 'AMC071')
             [~,xi] = setdiff(reliable_electrodes{i}, 138);
             reliable_electrodes{i} = reliable_electrodes{i}(xi);
-            rel_corr{i} = rel_corr{i}(xi);
+            relstat_cell{i} = relstat_cell{i}(xi);
             clear xi;
         end
         if strcmp(all_subjid{i}, 'AMC062')
             [~,xi] = setdiff(reliable_electrodes{i}, 186);
             reliable_electrodes{i} = reliable_electrodes{i}(xi);
-            rel_corr{i} = rel_corr{i}(xi);
+            relstat_cell{i} = relstat_cell{i}(xi);
             clear xi;
         end
         
@@ -130,10 +123,9 @@ n_electrodes = nan(1, n_subjects);
 for i = 1:n_subjects
     
     [D_cell{i}, t, stim_names, electrode_research_numbers] = ...
-        load_envelopes(exp, all_subjid{i}, ...
-        preprocessing_analysis_name, freq_cutoffs, preproc_resp_win, ...
-        'baseline_period', I.baseline_period);
-    assert(abs(1/(t(2)-t(1)) - I.preproc_sr)<1e-10);
+        load_envelopes(exp, all_subjid{i}, preproc_idstring, ...
+        'basewin', I.basewin, 'interpNaNs', I.interpNaNs, ...
+        'win', I.win, 'sr', I.sr);
     
     % select reliable electrodes
     if ~isnan(I.relthresh)
@@ -148,40 +140,42 @@ for i = 1:n_subjects
     
 end
 
-%% Further preprocessing
+%% Unwrap to matrix
 
 % initialize
-if I.average_runs
+if I.avruns
     D = nan(n_smps_per_stim, n_stimuli, sum(n_electrodes));
 else
     D = nan(n_smps_per_stim, n_stimuli, max(n_runs), sum(n_electrodes));
 end
 si = nan(1, sum(n_electrodes));
 ei = nan(1, sum(n_electrodes));
+if ~isnan(I.relthresh)
+    relstat = nan(1, sum(n_electrodes));
+else
+    relstat = [];
+end
 
 % unwrap across subjects while storing electrode and subject indices
 % optioanlly average across runs
 for i = 1:n_subjects
     xi = (1:n_electrodes(i)) + sum(n_electrodes(1:i-1));
-    if I.average_runs
+    if I.avruns
         D(:,:,xi) = squeeze_dims(nanmean(D_cell{i},3),3);
     else
         D(:,:,1:n_runs(i),xi) = D_cell{i};
     end
     si(xi) = i;
     ei(xi) = electrode_indices{i};
+    if ~isnan(I.relthresh)
+        relstat(xi) = relstat_cell{i};
+    end
     clear xi;
 end
 
-% interpolate NaN values
-D = interpNaN_ndarray(1:n_smps_per_stim, D, 'pchip');
-
-% resample to desired window and sample rate
-D = resample_and_window(D, preproc_resp_win, I.preproc_sr, I.time_win, I.sr);
-
 %% Save results
 
-save(MAT_file, 'D', 'ei', 'si', 'n_runs', 'stim_names', '-v7.3');
+save(MAT_file, 'D', 't', 'ei', 'si', 'n_runs', 'stim_names', 'relstat', '-v7.3');
 fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 
 %% Compute the variance for each electrode

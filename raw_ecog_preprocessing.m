@@ -1,5 +1,5 @@
-function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
-    signal, sr, P, figure_directory, varargin)
+function [signal, good_channels, noise60Hz_rms] = ...
+    raw_ecog_preprocessing(signal, sr, figure_directory, varargin)
 
 % Preprocessing steps applied to the raw ecog data. Steps include
 %
@@ -21,8 +21,6 @@ function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
 %
 % sr: signal sampling rate in Hz
 %
-% P: parameter structure, see preprocessing_parameters.m
-%
 % figure_directory: directory to save plots to
 %
 % figure_fname_prefix: file name prefix for all plots
@@ -31,12 +29,21 @@ function [signal, good_channels, noise60Hz_rms] = raw_ecog_preprocessing(...
 %
 % 2016-08-12, Generalized to work with an arbitrary input signal and coded a
 % separate wrapper to handle data input/output
+% 
+% 2019-01-21: Changed parameter handling
 
 % number of total channels
 n_channels = size(signal,2);
 
 % optional variables / inputs
-I.steps = {'60Hz', 'highpass', 'car', 'notch'};
+I.steps = {'60Hz', 'car', 'notch'};
+I.bw60Hz = 0.6;
+I.frac = 0.5; % see channel_selection_from_60Hz_noise.m
+I.thresh60Hz = 5;
+I.hpcutoff = 0.5;
+I.hporder = 4;
+I.notchbw = 1;
+I.notchfreqs = [60, 120, 180, 240];
 I.electrode_numbers = 1:n_channels;
 I.plot_all_electrodes = false;
 I.exclude_from_car = [];
@@ -52,8 +59,9 @@ end
 if any(strcmp('60Hz', I.steps))
     fprintf('Detecting good/bad channels with 60 Hz noise...\n');
     [good_channels, noise60Hz_rms] = ...
-        channel_selection_from_60Hz_noise(signal, P, sr, ...
-        [figure_directory '/60Hz_noise']);
+        channel_selection_from_60Hz_noise(signal, sr, ...
+        [figure_directory '/60Hz_noise'], 'bw', I.bw60Hz, ...
+        'frac', I.frac, 'thresh', I.thresh60Hz);
     I.steps = setdiff(I.steps, '60Hz');
 else
     good_channels = 1:n_channels;
@@ -93,7 +101,7 @@ for i = 1:n_steps
         case 'highpass'
             
             fprintf('High-pass filtering the signal...\n');
-            signal = hp_filt(signal, P, sr);
+            signal = hp_filt(signal, sr, 'order', I.hporder, 'cutoffs', I.hpcutoff);
             
         case 'car'
             
@@ -104,7 +112,7 @@ for i = 1:n_steps
         case 'notch'
             
             fprintf('Notch filtering line noise...\n');
-            signal = notch_filt(signal, P, sr);
+            signal = notch_filt(signal, sr, 'bw', I.notchbw, 'freqs', I.notchfreqs);
             
         otherwise
             

@@ -1,43 +1,52 @@
-function envelope_outliers_wrapper(exp, subjid, r, envelope_MAT_file, varargin)
+function [outlier_MAT_file, param_idstring] = envelope_outliers_wrapper(exp, subjid, r, env_idstring, varargin)
 
 % Detects outliers in ECoG envelopes. A wrapper for envelope_outliers.m. See
 % this function for details.
 %
-% 2016-08-15 - Created, Sam NH
+% 2016-08-15: Created, Sam NH
+%
+% 2018-11-20: Saves the multiscale outliers, includes optional parameters
 % 
-% 2018-11-20 - Saves the multiscale outliers, includes optional parameters
+% 2019-01-21: Changed parameter handling, Sam NH
 
-I.overwrite = false;
-I.scales = [0 0.25 1 4];
-I.thresholds = [5 2.5 2 1.5];
+I.scales = 0; %[0 0.25 1 4];
+I.thresholds = 5; %[5 2.5 2 1.5];
 I.percentile = 0.9;
+I.overwrite = false;
 I.plot_mosaic = true;
 I.plot_individ_electrodes = false;
-I = parse_optInputs_keyvalue(varargin, I);
+[I, ~, C_value] = parse_optInputs_keyvalue(varargin, I);
 
-% general-purpose ecog analysis code
-global root_directory;
+global root_directory
 
 % directory for this project
 project_directory = [root_directory '/' exp];
 
+% string to identify the parameters of this analysis
+outlier_idstring = struct2string(C_value, 'omit_field', ...
+    {'overwrite', 'plot_mosaic', 'plot_individ_electrodes'});
+if isempty(outlier_idstring); outlier_idstring = 'default'; end
+
+param_idstring = [env_idstring '_out_' outlier_idstring];
+
+% directory to save results to
+input_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r) '/' env_idstring];
+output_directory = [project_directory '/analysis/preprocessing/' subjid '/r' num2str(r) '/' param_idstring];
+if ~exist(output_directory, 'dir'); mkdir(output_directory); end
+
+% directory to save figures to
+figure_directory = strrep(output_directory, 'analysis', 'figures');
+if ~exist(figure_directory, 'dir'); mkdir(figure_directory); end
+
+% file to save results to
+outlier_MAT_file = [output_directory '/env.mat'];
+
 % check if file already exists
-outliers_exist = ~isempty(whos('-file', envelope_MAT_file, 'outliers'));
-if ~outliers_exist || I.overwrite
+if ~exist(outlier_MAT_file, 'file') || I.overwrite
     
     % load envelopes and envelope sampling rate
-    load(envelope_MAT_file, 'envelopes', 'env_sr', 'band_in_Hz');
-    
-    % MAT file to save results to
-    bp_freq_range_string = ...
-        [num2str(band_in_Hz(1)) '-' num2str(band_in_Hz(2)) 'Hz'];
-    
-    % directory to save plots to
-    figure_directory = [project_directory '/figures/envelopes/' subjid '/' ...
-        'r' num2str(r) '/bpfilt-' bp_freq_range_string '-outliers'];
-    if ~exist(figure_directory, 'dir')
-        mkdir(figure_directory);
-    end
+    env_MAT_file = [input_directory '/env.mat'];
+    load(env_MAT_file, 'envelopes', 'env_sr');
     
     % detect outliers
     fprintf('Detecting outliers...\n'); drawnow;
@@ -46,7 +55,10 @@ if ~outliers_exist || I.overwrite
         'percentile', I.percentile, 'plot_mosaic', I.plot_mosaic, ...
         'plot_individ_electrodes', I.plot_individ_electrodes);
     
-    % save results
-    save(envelope_MAT_file, 'outliers', 'multiscale_outliers', '-append', '-v7.3');
+    % copy over envelopes
+    copyfile(env_MAT_file, outlier_MAT_file, 'f');
+    
+    % append outliers
+    save(outlier_MAT_file, 'outliers', 'multiscale_outliers', '-append', '-v7.3');
     
 end
