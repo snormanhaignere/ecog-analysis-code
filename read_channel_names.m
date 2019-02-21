@@ -13,6 +13,9 @@ elseif strcmp(subjid, '078_CU100')
     for i = 1:96
         chnames{i} = ['ch' num2str(i)];
     end
+elseif strcmp(subjid, '080_NY706')
+    E = read_elec_coords_pial(subjid, 'both');
+    chnames = E.chnames;
 else
     X = load([root_directory '/ecog-quilting/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
     chnames = X.chnames;

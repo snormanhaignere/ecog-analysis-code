@@ -112,6 +112,10 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % save results
     save(MAT_file, 'R');
     
+else
+    
+    load(MAT_file, 'R');
+    
 end
 
 %% Plot

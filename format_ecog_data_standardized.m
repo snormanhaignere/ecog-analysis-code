@@ -48,6 +48,9 @@ I.overwrite = false;
 % whether or not to interpolate NaN values
 I.interpNaNs = true;
 
+% whether or not to hand exclude certain electrodes/runs
+I.handexclude = false;
+
 % whether or not to enter debug keyboard mode
 I.keyboard = false;
 
@@ -138,6 +141,29 @@ for i = 1:n_subjects
     % dimensions
     [n_smps_per_stim, n_stimuli, n_runs(i), n_electrodes(i)] = size(D_cell{i});
     
+end
+
+%% Exclude electrodes
+
+if I.handexclude
+    load([root_directory '/' exp '/analysis/hand-exclude.mat'], 'exclude');
+    for i = 1:size(exclude,1)
+        xi = ismember(all_subjid, exclude{i,1});
+        assert(sum(xi)<2);
+        if sum(xi)>0
+            yi = electrode_indices{xi}==exclude{i,2};
+            assert(sum(yi)==1);
+            if length(exclude{i,3})==1 && isnan(exclude{i,3})
+                fprintf('Excluding electrode %d\n', exclude{i,2});
+                D_cell{xi} = D_cell{xi}(:,:,:,~yi);
+                electrode_indices{xi} = electrode_indices{xi}(~yi);
+                n_electrodes(xi) = n_electrodes(xi)-1;
+            else
+                D_cell{xi}(:,:,exclude{i,3},yi) = NaN;
+            end
+        end
+        clear xi yi;
+    end
 end
 
 %% Unwrap to matrix
@@ -349,5 +375,9 @@ fprintf('Results saved here:\n%s\n', MAT_file); drawnow;
 % save([root_directory '/naturalsound-ecog/analysis/formatted-data/partition' ...
 %     sprintf('-%.1f', partition_fractions) '-randseed' num2str(rand_seed) '.mat'],...
 %     'partition_index', '-v7.3');
+
+
+%%
+
 
 
