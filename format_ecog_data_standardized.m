@@ -94,7 +94,7 @@ if ~isnan(I.relthresh)
             'splithalf', I.splithalf, 'spearbrown', I.spearbrown, 'permdur', I.permdur);
         
         reliable_electrodes{i} = find(R.(I.relstat) > I.relthresh);
-        relstat_cell{i} = I.relstat(R.(I.relstat) > I.relthresh);
+        relstat_cell{i} = R.(I.relstat)(R.(I.relstat) > I.relthresh);
         
         % remove errant electrode
         if strcmp(all_subjid{i}, 'AMC071')

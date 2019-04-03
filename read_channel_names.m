@@ -74,7 +74,7 @@ switch subjid
         chnames = strrep(chnames, '_', ''); 
         
         
-    case {'068_NY679', '070_NY686', '071_NY682', '074_NY688', '079_NY704'}
+    case {'068_NY679', '070_NY686', '071_NY682', '074_NY688', '079_NY704', '080_NY712', '081_NY708'}
         
         new_chnames = cell(size(chnames));
         for i = 1:length(chnames)
