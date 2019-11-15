@@ -2,7 +2,9 @@ function MAT_file = save_ECoG_from_EDF_as_MAT(exp, subjid, r, varargin)
 
 % Saves ECoG data from EDF file as a .mat file
 %
-% 2016-11-11: Last edited/commented, Sam NH
+% 2019-11-11: Last edited/commented, Sam NH
+% 
+% 2019-11-11: Updated to optionally exclude a certain window, Sam NH
 
 global root_directory;
 
@@ -13,6 +15,7 @@ I.trigchan = [];
 I.electrode_order = [];
 I.keyboard = false;
 I.startend = [];
+I.excludewin = [];
 I.plot = false;
 I = parse_optInputs_keyvalue(varargin, I);
 
@@ -50,6 +53,9 @@ if ~exist(MAT_file, 'file') || I.overwrite
     % select samples
     if ~isempty(I.startend)
         record = record(:, I.startend(1):I.startend(2));
+        if ~isempty(I.excludewin)
+            I.excludewin = I.excludewin - (I.startend(1)-1);
+        end
     end
     
     % save sampling rate as separate variable
@@ -67,6 +73,10 @@ if ~exist(MAT_file, 'file') || I.overwrite
         end
         save(mkpdir(audio_MAT_file), 'audio_signal', 'sr');
         clear audio_MAT_file audio_signal;
+        if ~isempty(I.excludewin)
+            excludewin = I.excludewin;
+            save(audio_MAT_file, '-append', 'excludewin');
+        end
     end
     if ~isempty(I.trigchan)
         trigger_signal = record(I.trigchan,:)';
@@ -78,6 +88,10 @@ if ~exist(MAT_file, 'file') || I.overwrite
         end
         save(mkpdir(trigger_MAT_file), 'trigger_signal', 'sr');
         clear trigger_MAT_file trigger_signal;
+        if ~isempty(I.excludewin)
+            excludewin = I.excludewin;
+            save(trigger_MAT_file, '-append', 'excludewin');
+        end
     end
     
     % pick out ecog
@@ -90,7 +104,10 @@ if ~exist(MAT_file, 'file') || I.overwrite
     end
     
     % save as MAT file
-    save(MAT_file, 'signal', 'sr', 'electrode_research_numbers', '-v7.3');
-    
+    save(mkpdir(MAT_file), 'signal', 'sr', 'electrode_research_numbers', '-v7.3');
+    if ~isempty(I.excludewin)
+        excludewin = I.excludewin;
+        save(MAT_file, '-append', 'excludewin');
+    end
 end
 

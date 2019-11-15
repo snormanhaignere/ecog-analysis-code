@@ -2,28 +2,28 @@ function env = bandpass_envelopes(signal, signal_sr, env_sr, ...
     band_in_Hz, filter_order, figure_directory, varargin)
 
 % Measure envelopes from bandpass filters.
-% 
+%
 % -- Inputs --
-% 
+%
 % signal: [time x electrode] signal matrix
 %
 % signal_sr: sampling rate of the signal
-% 
+%
 % env_sr: sampling rate to use for the envelopes (typically much lower than the
 % signal sampling rate, e.g. 100 Hz vs. 1200 Hz)
-% 
+%
 % band_in_Hz: 2-dimensional vector of frequency cutoffs
-% 
+%
 % filter_orders: order of the butterworth filters
-% 
+%
 % figure_directory: directory to save figures to
-% 
+%
 % -- Outputs --
-% 
+%
 % envelopes: [time x bands x electrode] matrix with envelopes
-% 
+%
 % 2016-1-26: Created by Sam NH
-% 
+%
 % 2016-09-23: Changes to handling of optional inputs and plotting, Sam NH
 
 %% Setup
@@ -34,6 +34,7 @@ I.good_channels = 1:n_channels;
 I.electrode_numbers = 1:n_channels;
 % I.plot_all_electrodes = false;
 I.plot = true;
+I.writeprogress = true;
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory to save figures with timecourses/spectra for individual electrodes
@@ -49,15 +50,21 @@ Hd = design(h,'butter');
 [B, A] = sos2tf(Hd.sosMatrix,Hd.scaleValues);
 
 % apply filter
-fprintf('Applying filter...\n');
+if I.writeprogress
+    fprintf('Applying filter...\n');
+end
 subb = filtfilt(B,A,signal);
 
 % measure envelope
-fprintf('Calculating envelopes...\n');
+if I.writeprogress
+    fprintf('Calculating envelopes...\n');
+end
 env = abs(hilbert(subb));
 
 % resample to desired rate
-fprintf('Downsampling...\n');
+if I.writeprogress
+    fprintf('Downsampling...\n');
+end
 env = resample(env, env_sr, signal_sr);
 
 % truncate
@@ -96,7 +103,7 @@ plot_electrode_spectra(subb(:,good_channels_to_plot), signal_sr, ...
     'single_mosaic', true, ...
     'output_file', [figure_directory '/bpfilt_' ...
     num2str(band_in_Hz(1)) '-' num2str(band_in_Hz(2)) 'Hz_subb_spectra']);
-    
+
 % subband spectra for all electrodes
 % if I.plot_all_electrodes
 %     plot_electrode_timecourses(subb, signal_sr, ...

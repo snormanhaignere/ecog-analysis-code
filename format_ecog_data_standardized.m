@@ -18,7 +18,7 @@ global root_directory;
 % outide code directories
 % addpath([root_directory '/ecog-analysis-code']);
 addpath([root_directory '/general-analysis-code']);
-addpath([root_directory '/export_fig_v2']);
+addpath([root_directory '/export_fig_v3']);
 
 % experiment name and all subject IDs
 n_subjects = length(all_subjid);

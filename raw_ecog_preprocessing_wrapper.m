@@ -18,17 +18,20 @@ global root_directory;
 I.steps = {'60Hz', 'car', 'notch'};
 I.bw60Hz = 0.6;
 I.frac = 0.5; % see channel_selection_from_60Hz_noise.m
+I.min_nchannels = 10; % see channel_selection_from_60Hz_noise.m
 I.thresh60Hz = 5;
 I.hpcutoff = 0.5;
 I.hporder = 4;
 I.notchbw = 1;
 I.notchfreqs = [60, 120, 180, 240];
 I.exclude_from_car = [];
+I.array_inds = [];
 I.overwrite = false;
 [I, ~, C_value] = parse_optInputs_keyvalue(varargin, I);
 
 % string to identify the parameters of this analysis
-param_idstring = struct2string(C_value, 'omit_field', {'overwrite'});
+param_idstring = struct2string(C_value, 'omit_field', {'overwrite','array_inds'});
+if ~isempty(I.array_inds); param_idstring = [param_idstring '_arrayspecified']; end
 if isempty(param_idstring); param_idstring = 'default'; end
 
 % directory for this project
@@ -60,7 +63,9 @@ if ~exist(MAT_file_with_preproc_signal, 'file') || I.overwrite
         'hpcutoff', I.hpcutoff, 'hporder', I.hporder, ...
         'notchbw', I.notchbw, 'notchfreqs', I.notchfreqs, ...
         'exclude_from_car', I.exclude_from_car, ...
-        'electrode_numbers', electrode_research_numbers);
+        'electrode_numbers', electrode_research_numbers, ...
+        'array_inds', I.array_inds, ...
+        'min_nchannels', I.min_nchannels);
     
     % save to mat file
     save(MAT_file_with_preproc_signal, ...

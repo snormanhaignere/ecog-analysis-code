@@ -39,6 +39,7 @@ n_channels = size(signal,2);
 I.steps = {'60Hz', 'car', 'notch'};
 I.bw60Hz = 0.6;
 I.frac = 0.5; % see channel_selection_from_60Hz_noise.m
+I.min_nchannels = 10;
 I.thresh60Hz = 5;
 I.hpcutoff = 0.5;
 I.hporder = 4;
@@ -47,6 +48,8 @@ I.notchfreqs = [60, 120, 180, 240];
 I.electrode_numbers = 1:n_channels;
 I.plot_all_electrodes = false;
 I.exclude_from_car = [];
+I.array_inds = [];
+I.chnames = {};
 I = parse_optInputs_keyvalue(varargin, I);
 
 % directory to save figures with timecourses for individual electrodes
@@ -61,8 +64,18 @@ if any(strcmp('60Hz', I.steps))
     [good_channels, noise60Hz_rms] = ...
         channel_selection_from_60Hz_noise(signal, sr, ...
         [figure_directory '/60Hz_noise'], 'bw', I.bw60Hz, ...
-        'frac', I.frac, 'thresh', I.thresh60Hz);
+        'frac', I.frac, 'thresh', I.thresh60Hz, 'min_nchannels', I.min_nchannels,...
+        'chnames', I.chnames);
     I.steps = setdiff(I.steps, '60Hz');
+elseif any(strcmp('array_60Hz', I.steps))
+    assert(~any(strcmp('60Hz', I.steps)));
+    fprintf('Detecting good/bad channels using 60 Hz noise within arrays...\n');
+    [good_channels, noise60Hz_rms] = ...
+        channel_selection_from_60Hz_noise(signal, sr, ...
+        [figure_directory '/60Hz_noise_array'], 'bw', I.bw60Hz, ...
+        'frac', I.frac, 'thresh', I.thresh60Hz, 'array_inds', I.array_inds, ...
+        'min_nchannels', I.min_nchannels, 'chnames', I.chnames);
+    I.steps = setdiff(I.steps, 'array_60Hz');
 else
     good_channels = 1:n_channels;
     noise60Hz_rms = [];
@@ -108,6 +121,20 @@ for i = 1:n_steps
             fprintf('Subtracting the average timecourse of good channels...\n');
             common_average = mean(signal(:,setdiff(good_channels, I.exclude_from_car)),2);
             signal = signal - common_average * ones(1,n_channels);
+            
+        case 'array_car'
+            
+            fprintf('Subtracting the average timecourse of good channels within each array...\n');
+            assert(length(I.array_inds)==size(signal,2));
+            unique_inds = unique(I.array_inds);
+            for j = 1:length(unique_inds)
+                array_chan = find(unique_inds(j)==I.array_inds);
+                chan_to_average = setdiff(intersect(array_chan, good_channels), I.exclude_from_car);
+                assert(~isempty(chan_to_average));
+                common_average = mean(signal(:,chan_to_average),2);
+                signal(:,array_chan) = bsxfun(@minus, signal(:,array_chan), common_average);
+            end
+            clear unique_inds array_chan common_average chan_to_average;
             
         case 'notch'
             

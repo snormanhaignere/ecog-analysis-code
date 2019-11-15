@@ -53,7 +53,9 @@ for i = 1:n_onsets
             n_reps_per_stim(stim_index_for_each_onset(i)) + 1;
     end
 end
-assert(all(~isnan(stim_index_for_each_onset)));
+if ~all(~isnan(stim_index_for_each_onset));
+    keyboard;
+end
 
 % assign
 n_electrodes = size(signal,2);

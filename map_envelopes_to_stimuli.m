@@ -17,6 +17,7 @@ function [MAT_file_with_envelopes_mapped_to_stim, param_idstring] = ...
 I.overwrite = false;
 I.remove1backs = false;
 I.durtol = 1e-2;
+I.stimfile = 'stim_names';
 [I, ~, C_value] = parse_optInputs_keyvalue(varargin, I);
 
 global root_directory
@@ -47,8 +48,8 @@ MAT_file_with_envelopes_mapped_to_stim = [output_directory '/env.mat'];
 if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') || I.overwrite
     
     % names of all of the stimuli in the experiment
-    load([root_directory '/' exp '/analysis/stim_names.mat'],'stim_names');
-       
+    load([root_directory '/' exp '/analysis/' I.stimfile '.mat'],'stim_names');
+           
     % load the envelopes
     env_MAT_file = [input_directory '/env.mat'];
     load(env_MAT_file, 'envelopes', 'outliers', 'env_sr', ...
@@ -87,7 +88,7 @@ if ~exist(MAT_file_with_envelopes_mapped_to_stim, 'file') || I.overwrite
         
     else
         
-        assert(max(abs(t.dur_in_sec-t.dur_in_sec(1))) > I.durtol)
+        % assert(max(abs(t.dur_in_sec-t.dur_in_sec(1))) > I.durtol)
         
         % map the enevelopes to the stimuli
         envelopes_mapped_to_stim = map_signal_to_stimulus_onsets_variable_duration(...
