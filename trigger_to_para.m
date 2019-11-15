@@ -26,6 +26,15 @@ project_directory = [root_directory '/' exp];
 % load the trigger signal
 trigger_MAT_file = [project_directory '/data/ECoG-trigger/' subjid '/r' num2str(r) '.mat'];
 load(trigger_MAT_file, 'trigger_signal', 'sr');
+assert(size(trigger_signal,2));
+
+% zero exclusion window
+if isvar_in_mfile(trigger_MAT_file, 'excludewin')
+    load(trigger_MAT_file, 'excludewin');
+    if ~isempty(excludewin)
+        trigger_signal(excludewin(1):excludewin(2)) = 0;
+    end
+end
 
 % load the trigger template
 X = load(I.trigtemplatefile);

@@ -28,9 +28,18 @@ I.para_suffix = '';
 % directory structure and external repositories
 project_directory = [root_directory '/' exp];
 
-% load the trigger signal
+% load the audio signal
 audio_MAT_file = [project_directory '/data/ECoG-audio/' subjid '/r' num2str(r) '.mat'];
 load(audio_MAT_file, 'audio_signal', 'sr');
+assert(size(audio_signal,2));
+
+% zero exclusion window
+if isvar_in_mfile(audio_MAT_file, 'excludewin')
+    load(audio_MAT_file, 'excludewin');
+    if ~isempty(excludewin)
+        audio_signal(excludewin(1):excludewin(2)) = 0;
+    end
+end
 
 % load stimulus orders
 stim_order_file = [project_directory '/data/ECoG-stimorders' ...
