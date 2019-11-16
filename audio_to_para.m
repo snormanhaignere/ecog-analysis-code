@@ -31,7 +31,7 @@ project_directory = [root_directory '/' exp];
 % load the audio signal
 audio_MAT_file = [project_directory '/data/ECoG-audio/' subjid '/r' num2str(r) '.mat'];
 load(audio_MAT_file, 'audio_signal', 'sr');
-assert(size(audio_signal,2));
+assert(size(audio_signal,2)==1);
 
 % zero exclusion window
 if isvar_in_mfile(audio_MAT_file, 'excludewin')
