@@ -59,8 +59,13 @@ if ~exist(MAT_file, 'file') || I.overwrite
     end
     
     % save sampling rate as separate variable
-    sr = hdr.frequency(1);
-    assert(all(eq_tol(hdr.frequency(1), hdr.frequency)));
+    if ~isempty(I.ecogchan)
+        sr = hdr.frequency(I.ecogchan(1));
+        assert(all(eq_tol(sr, hdr.frequency(I.ecogchan))));
+    else
+        sr = hdr.frequency(1);
+        assert(all(eq_tol(sr, hdr.frequency)));
+    end
     
     % separate out audio and trigger
     if ~isempty(I.audiochan)
@@ -72,11 +77,11 @@ if ~exist(MAT_file, 'file') || I.overwrite
             title('Audio');
         end
         save(mkpdir(audio_MAT_file), 'audio_signal', 'sr');
-        clear audio_MAT_file audio_signal;
         if ~isempty(I.excludewin)
             excludewin = I.excludewin;
             save(audio_MAT_file, '-append', 'excludewin');
         end
+        clear audio_MAT_file audio_signal;
     end
     if ~isempty(I.trigchan)
         trigger_signal = record(I.trigchan,:)';
@@ -87,11 +92,11 @@ if ~exist(MAT_file, 'file') || I.overwrite
             title('Trigger');
         end
         save(mkpdir(trigger_MAT_file), 'trigger_signal', 'sr');
-        clear trigger_MAT_file trigger_signal;
         if ~isempty(I.excludewin)
             excludewin = I.excludewin;
             save(trigger_MAT_file, '-append', 'excludewin');
         end
+        clear trigger_MAT_file trigger_signal;
     end
     
     % pick out ecog
