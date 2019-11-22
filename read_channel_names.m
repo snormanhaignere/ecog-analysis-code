@@ -3,6 +3,8 @@ function chnames = read_channel_names(subjid)
 global root_directory;
 root_directory = my_root_directory;
 
+speech_TCI_subjid = {'CU106', '086_NY723', 'CU105', 'CU103', '093_CUBF44', '085_CU102', 'CU108', 'NY751', 'CU107'};
+
 if strcmp(subjid, '057_LIJ126')
     chnames = cell(1, 352);
     for i = 1:352
@@ -15,20 +17,22 @@ elseif strcmp(subjid, '078_CU100')
     end
 elseif strcmp(subjid, '080_NY706')
     E = read_elec_coords_pial(subjid, 'both');
-    chnames = E.chnames;
-elseif strcmp(subjid, '093_CUBF44')
-    X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
-    chnames = X.chnames;
-elseif strcmp(subjid, 'CU107')
-    X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
-    chnames = X.chnames;
-elseif strcmp(subjid, 'CU108')
-    X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
-    chnames = X.chnames;
-elseif strcmp(subjid, 'NY751')
-    X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
-    chnames = X.chnames;
-else
+    chnames = E.chnames;s
+% elseif strcmp(subjid, '093_CUBF44')
+%     X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
+%     chnames = X.chnames;
+% elseif strcmp(subjid, 'CU107')
+%     X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
+%     chnames = X.chnames;
+% elseif strcmp(subjid, 'CU108')
+%     X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
+%     chnames = X.chnames;
+% elseif strcmp(subjid, 'NY751')
+%     X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
+%     chnames = X.chnames;
+elseif any(ismember(speech_TCI_subjid, subjid))
+    load([root_directory '/speech-TCI/data/ECoG-chnames/' subjid '.mat'], 'chnames');
+else    
     X = load([root_directory '/ecog-quilting/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
     chnames = X.chnames;
 end

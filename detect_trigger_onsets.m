@@ -8,11 +8,14 @@ function trig_onsets = detect_trigger_onsets(trigger_signal, trig_template, sr, 
 % aross all timepoints).
 % 
 % 2019-06-11: Created, Sam NH
+% 
+% 2019-11-16: Added capacity to save figures
 
 clear I;
 I.tol = 0.4;
 I.win_to_zero = length(trig_template)/sr*1.5;
 I.plot = true;
+I.figdir = '';
 I = parse_optInputs_keyvalue(varargin, I);
 
 % delays = [1, 3000, 6000]-1;
@@ -88,6 +91,11 @@ if I.plot
     plot((0:length(trigger_signal)-1)/sr, [trigger_signal, simulated_trigger_signal]);
     xlabel('Time');
     legend('Actual', 'Predicted', 'Location', 'EastOutside');
+    if ~isempty(I.figdir)
+        fname = [I.figdir '/cc'];
+        export_fig(mkpdir([fname '.pdf']), '-pdf', '-transparent');
+        export_fig(mkpdir([fname '.png']), '-png', '-transparent', '-r150');
+    end
     
     figh = figure;
     set(figh, 'Position', [100 100 1000 600]);
@@ -100,6 +108,11 @@ if I.plot
         xlabel('Time');
         title(sprintf('trigger %d', trigs_to_plot(i)));
         legend('Actual', 'Predicted', 'Location', 'SouthOutside');
+    end
+    if ~isempty(I.figdir)
+        fname = [I.figdir '/cc-zoomed'];
+        export_fig(mkpdir([fname '.pdf']), '-pdf', '-transparent');
+        export_fig(mkpdir([fname '.png']), '-png', '-transparent', '-r150');
     end
 end
 

@@ -6,7 +6,9 @@ function trigger_to_para(exp, subjid, r, varargin)
 % 
 % 2019-11-06: Created, Sam NH
 % 
-% 2019-11-11: Last edited, Sam NH
+% 2019-11-11: Misc edits, Sam NH
+% 
+% 2019-11-16: Added capacity to save figures
 
 global root_directory;
 
@@ -22,6 +24,9 @@ I.para_suffix = '';
 
 % directory structure and external repositories
 project_directory = [root_directory '/' exp];
+
+% directory to save figures to
+figure_directory = [project_directory '/figures/trigger-sync/' subjid '/r' num2str(r)];
 
 % load the trigger signal
 trigger_MAT_file = [project_directory '/data/ECoG-trigger/' subjid '/r' num2str(r) '.mat'];
@@ -43,7 +48,7 @@ trig_template = resample(X.trigform, sr, X.fs);
 % find the trigger onsets
 trig_onsets = detect_trigger_onsets(trigger_signal, trig_template, sr, ...
     'tol', I.tol, 'win_to_zero', I.win_to_zero*length(trig_template)/sr, ...
-    'plot', I.plot);
+    'plot', I.plot, 'figdir', figure_directory);
 
 % load stimulus orders
 stim_order_file = [project_directory '/data/ECoG-stimorders' ...

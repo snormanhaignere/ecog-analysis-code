@@ -5,6 +5,8 @@ function audio_to_para(exp, subjid, r, varargin)
 % Wrapper around detect_audio_onsets.m
 % 
 % 2019-11-11: Created, Sam NH
+% 
+% 2019-11-16: Added capacity to save figures
 
 global root_directory;
 
@@ -27,6 +29,9 @@ I.para_suffix = '';
 
 % directory structure and external repositories
 project_directory = [root_directory '/' exp];
+
+% directory to save figures to
+figure_directory = [project_directory '/figures/audio-sync/' subjid '/r' num2str(r)];
 
 % load the audio signal
 audio_MAT_file = [project_directory '/data/ECoG-audio/' subjid '/r' num2str(r) '.mat'];
@@ -52,7 +57,7 @@ audio_onsets = detect_audio_onsets(audio_signal, sr, stim_directory, StimOrder, 
     'thresh', I.thresh, 'minisi', I.minisi, 'maxisi', I.maxisi, ...
     'breaks', I.breaks, 'win_to_zero', I.win_to_zero, ...
     'transform', I.transform, 'plot', I.plot, 'zoomedplot', I.zoomedplot, ...
-    'stimstoplot', I.stimstoplot, 'pause', I.pause);
+    'stimstoplot', I.stimstoplot, 'pause', I.pause, 'figdir', figure_directory);
 
 % para file to create
 if isempty(I.para_suffix)

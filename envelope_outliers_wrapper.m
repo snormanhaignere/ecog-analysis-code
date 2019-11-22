@@ -59,6 +59,6 @@ if ~exist(outlier_MAT_file, 'file') || I.overwrite
     copyfile(env_MAT_file, outlier_MAT_file, 'f');
     
     % append outliers
-    save(outlier_MAT_file, 'outliers', 'multiscale_outliers', '-append', '-v7.3');
+    save(outlier_MAT_file, 'outliers', 'multiscale_outliers', '-append');
     
 end

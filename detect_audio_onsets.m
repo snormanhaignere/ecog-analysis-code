@@ -10,6 +10,8 @@ function audio_onsets_smps = detect_audio_onsets(audio_signal, sr, ...
 % the expected isi of the stimuli.
 % 
 % 2019-11-11: Created, Sam NH
+% 
+% 2019-11-16: Added capacity to save figures
 
 clear I;
 I.thresh = 0.5;
@@ -22,6 +24,7 @@ I.plot = true;
 I.stimstoplot = [];
 I.zoomedplot = false;
 I.pause = false;
+I.figdir = '';
 I = parse_optInputs_keyvalue(varargin, I);
 
 n_stim_onsets = length(StimOrder);
@@ -111,6 +114,11 @@ for i = 1:n_stim_onsets
             ylabel('Norm CC');
             title(sprintf('stim %d, %s', i, StimOrder{i}));
             drawnow;
+            if ~isempty(I.figdir) && ~any(cc>thresh(i))
+                fname = [I.figdir '/cc/' sprintf('stim%d-%s', i, StimOrder{i})];
+                export_fig(mkpdir([fname '.pdf']), '-pdf', '-transparent');
+                export_fig(mkpdir([fname '.png']), '-png', '-transparent', '-r150');
+            end
         end
     end
     
@@ -153,6 +161,11 @@ for i = 1:n_stim_onsets
             xlim((lag(xi([1,end]))-cc_peaks{i}(j))/sr*1000);
             ylim([-1,1]);
             title('CC'); xlabel('ms');
+        end
+        if ~isempty(I.figdir)
+            fname = [I.figdir '/cc-zoomed/' sprintf('stim%d-%s', i, StimOrder{i})];
+            export_fig(mkpdir([fname '.pdf']), '-pdf', '-transparent');
+            export_fig(mkpdir([fname '.png']), '-png', '-transparent', '-r150');
         end
     end
     
