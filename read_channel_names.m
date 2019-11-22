@@ -3,7 +3,7 @@ function chnames = read_channel_names(subjid)
 global root_directory;
 root_directory = my_root_directory;
 
-speech_TCI_subjid = {'CU106', '086_NY723', 'CU105', 'CU103', '093_CUBF44', '085_CU102', 'CU108', 'NY751', 'CU107'};
+speech_TCI_subjid = {'CU109', 'CU106', '086_NY723', 'CU105', 'CU103', '093_CUBF44', '085_CU102', 'CU108', 'NY751', 'CU107'};
 
 if strcmp(subjid, '057_LIJ126')
     chnames = cell(1, 352);
