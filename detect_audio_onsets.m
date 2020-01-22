@@ -57,11 +57,20 @@ if I.plot
     end
 end
 
+switch I.transform
+    case 'none'
+        ecog_audio = audio_signal;
+    case 'abs'
+        ecog_audio = abs(audio_signal - median(audio_signal));
+    otherwise
+        error('No matching transform for %s', I.transform);
+end
+
 cc_peaks = cell(1, n_stim_onsets);
 
 minisi = nan(n_stim_onsets, 1);
 for i = 1:n_stim_onsets
-    
+        
     % read in audio waveform
     [wav, wavsr] = audioread([stim_directory '/' StimOrder{i} '.wav']);
     
@@ -71,19 +80,21 @@ for i = 1:n_stim_onsets
     switch I.transform
         case 'none'
             sig = resample(wav, sr, wavsr);
+        case 'abs'
+            sig = resample(abs(wav), sr, wavsr);
         otherwise
             error('No matching transform for %s', I.transform);
     end
     
-    [cc, lag] = xcorr(audio_signal, sig);
+    [cc, lag] = xcorr_pearson(ecog_audio, sig);
     cc = cc/max(cc);
     
     % get rid of negative lags
-    xi = lag>=0;
-    lag = lag(xi);
-    cc = cc(xi);
-    clear xi;
-    
+    %     xi = lag>=0;
+    %     lag = lag(xi);
+    %     cc = cc(xi);
+    %     clear xi;
+
     cc_orig = cc;
     while any(cc>thresh(i))
         
@@ -133,7 +144,7 @@ for i = 1:n_stim_onsets
         hold on;
         n_rows = n_sound_onsets;
         n_cols = 2;
-        simulated_audio = zeros(size(audio_signal));
+        simulated_audio = zeros(size(ecog_audio));
         for j = 1:n_sound_onsets
             
             subplot(n_rows, n_cols, 1 + (j-1)*2);
@@ -141,7 +152,7 @@ for i = 1:n_stim_onsets
             % plot audio signal
             win = [-0.1 0.4];
             xi = (round(win(1)*sr):round(win(2)*sr)) + cc_peaks{i}(j);
-            plot((xi-cc_peaks{i}(j))/sr*1000, zscore(audio_signal(xi)));
+            plot((xi-cc_peaks{i}(j))/sr*1000, zscore(ecog_audio(xi)));
             
             % plot template
             yi = (1:length(sig)) + cc_peaks{i}(j);
