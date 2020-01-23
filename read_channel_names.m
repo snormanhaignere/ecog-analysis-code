@@ -17,7 +17,8 @@ elseif strcmp(subjid, '078_CU100')
     end
 elseif strcmp(subjid, '080_NY706')
     E = read_elec_coords_pial(subjid, 'both');
-    chnames = E.chnames;s
+    chnames = E.chnames;
+    
 % elseif strcmp(subjid, '093_CUBF44')
 %     X = load([root_directory '/speech-TCI/data/ECoG-Raw/' subjid '/allchnames_B1.mat'], 'chnames');
 %     chnames = X.chnames;
@@ -90,7 +91,7 @@ switch subjid
         chnames = strrep(chnames, '_', ''); 
         
         
-    case {'068_NY679', '070_NY686', '071_NY682', '074_NY688', '079_NY704', '080_NY712', '081_NY708', '086_NY723'}
+    case {'068_NY679', '070_NY686', '071_NY682', '074_NY688', '079_NY704', '080_NY712', '081_NY708', '086_NY723', 'NY751'}
         
         new_chnames = cell(size(chnames));
         for i = 1:length(chnames)
@@ -112,6 +113,14 @@ switch subjid
         end
         
         chnames = new_chnames;
+        
+    case {'056_CUBF37'}
+        
+        chnames = strrep(chnames,'Heschls0','Heschls');
+        
+    case {'084_CUBF42'}
+        
+        chnames = strrep(chnames,'HG0','HG');
                            
 end
 

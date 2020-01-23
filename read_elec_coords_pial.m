@@ -82,3 +82,22 @@ else
     clear x;
     
 end
+
+% for some subjects append hemi to channel name
+switch subjid
+    case {'084_CUBF42', '085_CU102', '083_CU101'}
+        for i = 1:length(E.chnames)
+            if strcmp(subjid, '085_CU102') && strcmp(E.chnames{i}(1:4), 'LAMY')   
+                % do nothing
+            else
+                switch E.hemi{i}
+                    case 'rh'
+                        E.chnames{i} = ['R' E.chnames{i}];
+                    case 'lh'
+                        E.chnames{i} = ['L' E.chnames{i}];
+                    otherwise
+                        error('No matching hemi');
+                end
+            end
+        end
+end
